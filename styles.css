@@ -527,7 +527,15 @@ img { image-rendering: pixelated; }
 
 body[data-screen="screen-play"] #app { padding-bottom: 8px; }
 
-/* 无障碍:减少动效 */
+/* 无障碍:减少动效
+   注意:无限循环动画必须整个停掉(iteration-count:1 / animation:none),
+   只压缩时长会让它每帧随机跳姿势,疯狂闪烁 */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .hero-tiles .tile, .card-icon, .bg-float { animation: none !important; }
 }

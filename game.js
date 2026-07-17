@@ -1011,16 +1011,25 @@ document.addEventListener('keydown', e => {
 /* ---------------- 背景:飞行的小图标 ---------------- */
 (function spawnFloaters() {
   const zone = $('#bg-zone');
-  for (let i = 0; i < 13; i++) {
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches; // 减弱动效:静态散布,不飞
+  const count = innerWidth < 480 ? 9 : 13;
+  for (let i = 0; i < count; i++) {
     const ic = ICONS[(Math.random() * ICONS.length) | 0];
     const f = el('div', 'bg-float', `<img src="${ICON_PATH(ic.id)}" alt="">`);
     const size = 26 + Math.random() * 28;
+    const op = (0.16 + Math.random() * 0.2).toFixed(2);
     f.style.cssText = `left:${(Math.random() * 94) | 0}vw;width:${size | 0}px;height:${size | 0}px;` +
       `background:${ic.color};` +
       `--drift:${(Math.random() * 140 - 70) | 0}px;` +
       `--r0:${(Math.random() * 26 - 13) | 0}deg;--r1:${(Math.random() * 26 - 13) | 0}deg;` +
-      `--op:${(0.16 + Math.random() * 0.2).toFixed(2)};` +
+      `--op:${op};` +
       `animation-duration:${(14 + Math.random() * 16) | 0}s;animation-delay:${-(Math.random() * 30) | 0}s;`;
+    if (calm) {
+      f.style.animation = 'none';
+      f.style.bottom = `${(4 + Math.random() * 88) | 0}vh`;
+      f.style.opacity = op;
+      f.style.transform = `rotate(${(Math.random() * 26 - 13) | 0}deg)`;
+    }
     zone.appendChild(f);
   }
 })();

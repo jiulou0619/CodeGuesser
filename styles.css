@@ -146,6 +146,28 @@ img { image-rendering: pixelated; }
 .menu-daily { background: linear-gradient(135deg, #ffe9ad, #ffdb70); }
 .menu-free { background: linear-gradient(135deg, #c9ecff, #a4ddff); }
 
+/* 每日挑战完成:右上角绶带 + 倒计时 */
+.daily-ribbon {
+  position: absolute; top: -12px; right: -6px;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: linear-gradient(150deg, #7ee3a2, #40c057);
+  color: #fff; font-size: 12.5px; font-weight: 800;
+  padding: 4px 12px; border-radius: 999px;
+  border: 2.5px solid var(--ink);
+  box-shadow: 0 3px 0 rgba(51, 41, 78, .85);
+  transform: rotate(6deg);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, .22);
+  animation: ribbon-in .6s var(--spring-big) both;
+  pointer-events: none;
+}
+.daily-ribbon img { width: 12px; height: 12px; }
+@keyframes ribbon-in {
+  0% { transform: rotate(6deg) scale(0); }
+  65% { transform: rotate(10deg) scale(1.2); }
+  100% { transform: rotate(6deg) scale(1); }
+}
+.menu-desc b { font-family: var(--font-pix); font-size: 13.5px; letter-spacing: 1px; }
+
 .home-stats {
   margin-top: 18px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
 }

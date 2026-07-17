@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>码上猜 CodePop · 好友异步猜图标</title>
-<meta name="description" content="码上猜,马上猜!Q弹像素风图标解码对战 —— 出题给好友,异步破解,无需服务器!">
+<title>码上猜 CodePop · 好友猜图标对决</title>
+<meta name="description" content="码上猜,马上猜!Q弹像素风图标解码对战 —— 出题给好友,随时接招,无需服务器!">
 <link rel="icon" type="image/png" href="assets/icons/star.png">
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -33,20 +33,21 @@
       <p class="hero-sub">码上猜,马上猜!破解好友的图标密码,步数少者称王</p>
     </div>
     <div class="home-menu">
-      <button class="menu-btn menu-duel" id="btn-duel">
-        <img src="assets/icons/sword.png" alt="">
-        <span class="menu-title">好友对战</span>
-        <span class="menu-desc">出题发链接 · 异步远程斗智</span>
-      </button>
       <button class="menu-btn menu-daily" id="btn-daily">
         <img src="assets/icons/sun.png" alt="">
         <span class="menu-title">每日挑战</span>
-        <span class="menu-desc">全球同题 · 连胜打卡</span>
+        <span class="menu-desc" id="daily-desc">全球同题 · 连胜打卡</span>
+        <span class="daily-ribbon" id="daily-ribbon" hidden><img src="assets/icons/tick.png" alt="">已完成</span>
       </button>
       <button class="menu-btn menu-free" id="btn-free">
         <img src="assets/icons/dice.png" alt="">
         <span class="menu-title">无尽练习</span>
         <span class="menu-desc">随机密码 · 磨炼直觉</span>
+      </button>
+      <button class="menu-btn menu-duel" id="btn-duel">
+        <img src="assets/icons/sword.png" alt="">
+        <span class="menu-title">好友对战</span>
+        <span class="menu-desc">出题发给好友 · 步数少者称王</span>
       </button>
     </div>
     <div class="home-stats" id="home-stats"></div>

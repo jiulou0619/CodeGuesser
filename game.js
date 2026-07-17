@@ -1,5 +1,5 @@
 /* ============================================================
-   码上猜 CodePop — 异步好友对战猜图标密码
+   码上猜 CodePop — 好友对战猜图标密码
    纯静态实现:密码通过混淆链接在好友间传递,无需服务器
    ============================================================ */
 'use strict';
@@ -911,6 +911,23 @@ function renderHeroTiles() {
   const wrap = $('#hero-tiles');
   wrap.innerHTML = randomCode().split('').map(c => iconTileHTML(+c)).join('');
 }
+
+/* ---------------- 每日挑战:完成绶带 + 刷新倒计时 ---------------- */
+let homeTickId = 0;
+function dailyCountdownText() {
+  const now = new Date();
+  const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  let s = Math.max(0, ((midnight - now) / 1000) | 0);
+  const h = (s / 3600) | 0, m = ((s % 3600) / 60) | 0, sec = s % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+}
+function syncDailyMenu() {
+  const done = !!store.daily[todayStr()];
+  $('#daily-ribbon').hidden = !done;
+  $('#daily-desc').innerHTML = done
+    ? `新密码 <b>${dailyCountdownText()}</b> 后刷新`
+    : '全球同题 · 连胜打卡';
+}
 function goHome() {
   closeModal();
   clearInterval(game.timerId);
@@ -918,6 +935,12 @@ function goHome() {
   if (location.hash) history.replaceState(null, '', baseUrl());
   renderHomeStats();
   renderHeroTiles();
+  syncDailyMenu();
+  clearInterval(homeTickId);
+  homeTickId = setInterval(() => {
+    if ($('#screen-home').hidden) { clearInterval(homeTickId); return; }
+    syncDailyMenu();
+  }, 1000);
   showScreen('screen-home');
 }
 
@@ -948,7 +971,7 @@ $('#btn-daily').addEventListener('click', () => {
     $('#result-card').innerHTML = `
       <img class="card-icon" src="assets/icons/sun.png">
       <div class="card-title">今日挑战已完成</div>
-      <div class="card-sub">${done.win ? `${done.steps} 步破解 · 🔥 连胜 ${store.streak} 天` : '今天没能破解,明天再战!'}<br>明天 0 点刷新新密码</div>
+      <div class="card-sub">${done.win ? `${done.steps} 步破解 · 🔥 连胜 ${store.streak} 天` : '今天没能破解,明天再战!'}<br>新密码 <b>${dailyCountdownText()}</b> 后刷新</div>
       <div class="share-box">${esc(shareText)}</div>
       <div class="card-actions">
         <button class="big-btn green" id="r-share"><img src="assets/icons/share.png">分享战报</button>
@@ -990,7 +1013,7 @@ $('#btn-help').addEventListener('click', () => {
     <p>注意:它<b>不会告诉你对的是哪几个</b>——推理出来才过瘾!</p>
     <p><b>道具:</b>🧲 磁铁问一个图标在不在(+1步) · 🔭 望远镜偷看一个位置(+3步) · 📺 看 15 秒小广告,免费排除一个不在的图标</p>
     <p><b>小技巧:</b>长按或右键键盘图标,可以标记「排除/锁定」帮助推理。</p>
-    <p><b>好友对战:</b>布置密码 → 发链接给好友 → TA 破解后出题反击 → 你迎战 → 步数少者赢!全程异步,随时接招。</p>
+    <p><b>好友对战:</b>布置密码 → 发链接给好友 → TA 破解后出题反击 → 你迎战 → 步数少者赢!不用同时在线,随时接招。</p>
     <div class="modal-actions"><button class="big-btn primary" id="m-ok">明白了!</button></div>`)
     .querySelector('#m-ok').addEventListener('click', closeModal);
 });

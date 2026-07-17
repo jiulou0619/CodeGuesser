@@ -36,6 +36,8 @@
 
 html, body { height: 100%; }
 
+html, body { overscroll-behavior-y: contain; } /* 防止玩到一半下拉刷新 */
+
 body {
   font-family: var(--font-cn);
   color: var(--ink);
@@ -200,7 +202,7 @@ img { image-rendering: pixelated; }
 @supports (height: 100dvh) {
   #screen-play { height: calc(100dvh - 112px); }
 }
-.play-bottom { flex-shrink: 0; padding-top: 4px; }
+.play-bottom { flex-shrink: 0; padding-top: 4px; padding-bottom: env(safe-area-inset-bottom, 0px); }
 .legend { display: flex; justify-content: center; gap: 16px; margin: 2px 0 8px; }
 .legend-item {
   display: inline-flex; align-items: center; gap: 5px;
@@ -219,15 +221,21 @@ img { image-rendering: pixelated; }
 .guess-row .tiles { display: flex; gap: 8px; }
 .guess-row .tile { width: 52px; height: 52px; border-radius: 14px; }
 .row-index { width: 22px; text-align: right; font-family: var(--font-pix); font-size: 14px; color: #b9aed6; }
-.row-feedback { display: flex; gap: 4px; min-width: 82px; align-items: center; }
-.peg {
-  width: 15px; height: 15px; border-radius: 5px;
-  border: 2px solid rgba(51, 41, 78, .9);
-  background: #e9e4f2; display: inline-block; flex-shrink: 0;
+.row-feedback {
+  display: flex; flex-direction: column; gap: 3px;
+  min-width: 64px; align-items: flex-start; justify-content: center;
 }
-.peg-hit { background: var(--green); }
-.peg-near { background: var(--amber); }
-.row-feedback .peg { animation: badge-in .35s var(--spring-big) both; }
+.fb-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 700; line-height: 1;
+  padding: 4px 8px; border-radius: 999px;
+  border: 2px solid var(--ink); white-space: nowrap;
+  animation: badge-in .35s var(--spring-big) both;
+}
+.fb-chip b { font-size: 13px; }
+.fb-icons { background: #ffe08a; }
+.fb-pos { background: #b2f2bb; }
+.fb-chip.zero { background: #e9e4f2; color: var(--ink-soft); }
 @keyframes badge-in {
   0% { transform: scale(0) rotate(-20deg); }
   70% { transform: scale(1.25) rotate(4deg); }
@@ -526,6 +534,12 @@ img { image-rendering: pixelated; }
 }
 
 body[data-screen="screen-play"] #app { padding-bottom: 8px; }
+
+/* 触屏设备:悬停位移会在点按后"粘住",全部关掉(按压反馈由 :active 提供) */
+@media (hover: none) {
+  .icon-btn:hover, .menu-btn:hover, .key:hover, .item-btn:hover,
+  .big-btn:hover, .counter-btn:hover, .pos-pick .tile:hover { transform: none; }
+}
 
 /* 无障碍:减少动效
    注意:无限循环动画必须整个停掉(iteration-count:1 / animation:none),

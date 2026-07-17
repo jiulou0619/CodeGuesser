@@ -405,14 +405,12 @@ function submitGuess() {
     appendInputRow();
   }, CODE_LEN * 130 + 350);
 }
-/* 反馈:4 个小方块,绿=图标位置全对,黄=图标对位置错,灰=没中 */
+/* 反馈:两个带标签的计数胶囊——「图案」猜对的图标数(含位置对的)、「位置」其中位置也对的数。
+   不用与格子对齐的点阵,避免玩家误以为点的位置对应哪一格 */
 function feedbackHTML(a, b) {
-  let h = '';
-  for (let i = 0; i < CODE_LEN; i++) {
-    const cls = i < a ? ' peg-hit' : i < a + b ? ' peg-near' : '';
-    h += `<span class="peg${cls}" style="animation-delay:${(i * .07).toFixed(2)}s"></span>`;
-  }
-  return h;
+  const icons = a + b, pos = a;
+  return `<span class="fb-chip fb-icons${icons ? '' : ' zero'}">图案 <b>${icons}</b></span>` +
+         `<span class="fb-chip fb-pos${pos ? '' : ' zero'}" style="animation-delay:.1s">位置 <b>${pos}</b></span>`;
 }
 
 /* ---------------- 道具 ---------------- */
@@ -838,7 +836,7 @@ function handleIncoming(p) {
       <img class="card-icon" src="assets/icons/sword.png">
       <div class="card-title">${esc(p.n)} 向你发起挑战!</div>
       ${p.m ? `<div class="card-msg">“${esc(p.m)}”</div>` : ''}
-      <div class="card-sub">TA 藏了一组 4 个图标的密码。<br>每猜一次,小方块帮你打分:<br><span class="peg peg-hit" style="vertical-align:-2px"></span> 图标对,位置也对&nbsp;&nbsp;<span class="peg peg-near" style="vertical-align:-2px"></span> 图标对,位置不对<br>用最少的步数破解它!</div>
+      <div class="card-sub">TA 藏了一组 4 个图标的密码。<br>每猜一次会告诉你:<br><span class="fb-chip fb-icons">图案</span> 猜对了几个图标&nbsp;&nbsp;<span class="fb-chip fb-pos">位置</span> 其中几个连位置都对<br>用最少的步数破解它!</div>
       <div class="card-actions">
         <button class="big-btn primary" id="i-go"><img src="assets/icons/sword.png">开始破解</button>
         <button class="big-btn" id="i-home"><img src="assets/icons/arrow-left.png">先不了</button>
@@ -981,16 +979,15 @@ $('#btn-help').addEventListener('click', () => {
   openModal(`
     <h3>🎯 怎么玩</h3>
     <p><b>目标:</b>密码是 <b>4 个不重复</b>的图标。用最少的步数,猜出<b>是哪 4 个</b>、<b>按什么顺序</b>排的。</p>
-    <p><b>每猜一次,右边的 4 个小方块给你打分:</b><br>
-    <span class="peg peg-hit" style="vertical-align:-2px"></span> <b>绿块</b>:有 1 个图标猜对了,位置也对<br>
-    <span class="peg peg-near" style="vertical-align:-2px"></span> <b>黄块</b>:有 1 个图标在密码里,但位置放错了<br>
-    <span class="peg" style="vertical-align:-2px"></span> <b>灰块</b>:什么都没中</p>
+    <p><b>每猜一次,右边给你两个数:</b><br>
+    <span class="fb-chip fb-icons">图案 <b>2</b></span> 你摆的图标里,有 2 个确实在密码里<br>
+    <span class="fb-chip fb-pos">位置 <b>1</b></span> 这 2 个里面,只有 1 个站对了地方</p>
     <div class="help-example">
       ${iconTileHTML(0)}${iconTileHTML(2)}${iconTileHTML(4)}${iconTileHTML(7)}
-      <div class="help-fb">${feedbackHTML(2, 0)}</div>
+      <div class="help-fb">${feedbackHTML(1, 1)}</div>
     </div>
-    <p style="text-align:center;font-size:12.5px">例:密码是 🍎⭐🐱🌸,你猜 🍎⭐🍀🌙 → 两个绿块(🍎⭐位置全对)</p>
-    <p>注意:方块<b>不会告诉你对的是哪一个</b>——推理出来才过瘾!</p>
+    <p style="text-align:center;font-size:12.5px">例:密码是 🍎🐱⭐⚡,你猜 🍎⭐🍀🌙<br>🍎⭐ 都在密码里 → 图案 2;但只有 🍎 站对了地方 → 位置 1</p>
+    <p>注意:它<b>不会告诉你对的是哪几个</b>——推理出来才过瘾!</p>
     <p><b>道具:</b>🧲 磁铁问一个图标在不在(+1步) · 🔭 望远镜偷看一个位置(+3步) · 📺 看 15 秒小广告,免费排除一个不在的图标</p>
     <p><b>小技巧:</b>长按或右键键盘图标,可以标记「排除/锁定」帮助推理。</p>
     <p><b>好友对战:</b>布置密码 → 发链接给好友 → TA 破解后出题反击 → 你迎战 → 步数少者赢!全程异步,随时接招。</p>

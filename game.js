@@ -1,5 +1,5 @@
 /* ============================================================
-   CodePop 解码对决 — 异步好友对战猜图标密码
+   码上猜 CodePop — 异步好友对战猜图标密码
    纯静态实现:密码通过混淆链接在好友间传递,无需服务器
    ============================================================ */
 'use strict';
@@ -629,8 +629,8 @@ function renderResult({ win, steps, timeSec, surrendered }) {
   if (game.mode === 'daily' || game.mode === 'free') {
     const title = win ? ['密码破解!', '全部猜中!', '解码天才!'][(Math.random() * 3) | 0] : (surrendered ? '下次再战' : '密码逃走了…');
     const shareText = game.mode === 'daily'
-      ? `CodePop 解码对决 每日挑战 #${dailyNumber()}\n${win ? `${steps} 步破解 ${'⭐'.repeat(starCount(steps))}` : '未能破解 💦'}\n${shareGrid(grid)}\n${baseUrl()}`
-      : `我在 CodePop 用 ${stepsLabel(steps)} 破解了随机密码!\n${shareGrid(grid)}\n你也来试试:${baseUrl()}`;
+      ? `码上猜 CodePop 每日挑战 #${dailyNumber()}\n${win ? `${steps} 步破解 ${'⭐'.repeat(starCount(steps))}` : '未能破解 💦'}\n${shareGrid(grid)}\n${baseUrl()}`
+      : `我在「码上猜」用 ${stepsLabel(steps)} 破解了随机密码!\n${shareGrid(grid)}\n你也来试试:${baseUrl()}`;
     html = `
       <img class="card-icon" src="assets/icons/${win ? 'crown' : 'ghost'}.png">
       <div class="card-title">${title}</div>
@@ -686,7 +686,7 @@ function renderResult({ win, steps, timeSec, surrendered }) {
     if (verdict === 'me') store.duelWins++;
     save();
     const link = duelLink({ t: 'c3', an: p.an, bn: p.bn, as, bs });
-    const shareText = `CodePop 对决判决书 ⚖️\n${esc(p.an)}:${stepsLabel(as)} vs ${esc(p.bn)}:${stepsLabel(bs)}\n${verdictText(verdict, p.an, p.bn)}\n${link}`;
+    const shareText = `「码上猜」对决判决书 ⚖️\n${esc(p.an)}:${stepsLabel(as)} vs ${esc(p.bn)}:${stepsLabel(bs)}\n${verdictText(verdict, p.an, p.bn)}\n${link}`;
     card.innerHTML = `
       ${verdictHTML(verdict, { name: p.an, steps: as }, { name: p.bn, steps: bs })}
       <div class="card-sub">把判决书发给 ${esc(p.bn)},让 TA 心服口服!</div>
@@ -807,7 +807,7 @@ $('#btn-setup-go').addEventListener('click', () => {
   } else {
     const link = duelLink({ t: 'c1', n: myName(), c: code, m: msg });
     showShareModal('挑战链接已生成!', '发给好友,TA 打开就能开猜。你自己可别点开偷看哦~', link,
-      `我在「CodePop」藏了一组图标密码,敢来破译吗?\n${link}`);
+      `我在「码上猜」藏了一组图标密码,敢来破译吗?码上猜,马上猜!\n${link}`);
   }
 });
 function showShareModal(title, sub, link, shareText) {
@@ -944,7 +944,7 @@ $('#btn-daily').addEventListener('click', () => {
   const done = store.daily[today];
   if (done) {
     // 已完成:直接展示战报
-    const shareText = `CodePop 解码对决 每日挑战 #${dailyNumber()}\n${done.win ? `${done.steps} 步破解 ${'⭐'.repeat(starCount(done.steps))}` : '未能破解 💦'}\n${shareGrid(done.grid)}\n${baseUrl()}`;
+    const shareText = `码上猜 CodePop 每日挑战 #${dailyNumber()}\n${done.win ? `${done.steps} 步破解 ${'⭐'.repeat(starCount(done.steps))}` : '未能破解 💦'}\n${shareGrid(done.grid)}\n${baseUrl()}`;
     $('#result-card').innerHTML = `
       <img class="card-icon" src="assets/icons/sun.png">
       <div class="card-title">今日挑战已完成</div>

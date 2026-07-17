@@ -592,7 +592,8 @@ const emojiRow = g => {
   return '🟢'.repeat(a) + '🟡'.repeat(b) + '⚪'.repeat(CODE_LEN - a - b);
 };
 function shareGrid(grid) { return grid.map(emojiRow).join('\n'); }
-function starCount(steps) { return steps <= 4 ? 3 : steps <= 7 ? 2 : 1; }
+/* 最优策略平均也要 ~5.2 步,所以 5 步以内就是三星水准 */
+function starCount(steps) { return steps <= 5 ? 3 : steps <= 8 ? 2 : 1; }
 function starsHTML(n) {
   let h = '';
   for (let i = 0; i < 3; i++) h += `<img src="assets/icons/star5.png" class="${i < n ? '' : 'dim'}">`;

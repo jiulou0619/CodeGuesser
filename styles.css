@@ -1,9 +1,14 @@
 /* ============================================================
-   泡泡解码 CodePop — Q弹像素糖果风
+   CodePop 解码对决 — Q弹像素糖果风
    ============================================================ */
 @font-face {
   font-family: 'BoldPixels';
   src: url('assets/font/BoldPixels.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Xiaolai';
+  src: url('assets/font/Xiaolai-Regular.ttf') format('truetype');
   font-display: swap;
 }
 
@@ -21,8 +26,8 @@
   --red: #ff5a5f;
   --spring: cubic-bezier(.34, 1.56, .64, 1);
   --spring-big: cubic-bezier(.22, 1.8, .36, 1);
-  --font-pix: 'BoldPixels', 'Segoe UI', sans-serif;
-  --font-cn: 'BoldPixels', 'Yuanti SC', 'YouYuan', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  --font-pix: 'BoldPixels', 'Xiaolai', 'Segoe UI', sans-serif;
+  --font-cn: 'Xiaolai', 'Yuanti SC', 'YouYuan', 'Microsoft YaHei', 'PingFang SC', sans-serif;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -47,20 +52,26 @@ body {
 
 img { image-rendering: pixelated; }
 
-/* ---------- 背景泡泡 ---------- */
-#bubbles-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-.bg-bubble {
-  position: absolute; bottom: -120px; border-radius: 50%;
-  background: radial-gradient(circle at 32% 30%, rgba(255,255,255,.9), rgba(255,255,255,.15) 55%, transparent 70%),
-              rgba(140, 190, 255, .13);
-  border: 2px solid rgba(120, 160, 255, .18);
-  animation: bubble-rise linear infinite;
+/* ---------- 背景:飞行小图标 ---------- */
+#bg-zone { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.bg-float {
+  position: absolute; bottom: -80px;
+  border-radius: 26%;
+  border: 2.5px solid rgba(51, 41, 78, .16);
+  box-shadow: 0 4px 0 rgba(51, 41, 78, .08);
+  display: grid; place-items: center;
+  animation: icon-fly linear infinite;
+  will-change: transform;
 }
-@keyframes bubble-rise {
-  0%   { transform: translateY(0) translateX(0) scale(.8); opacity: 0; }
-  8%   { opacity: 1; }
-  92%  { opacity: 1; }
-  100% { transform: translateY(-110vh) translateX(40px) scale(1.08); opacity: 0; }
+.bg-float img { width: 60%; height: 60%; }
+@keyframes icon-fly {
+  0%   { transform: translate(0, 0) rotate(var(--r0, -8deg)) scale(.85); opacity: 0; }
+  6%   { opacity: var(--op, .3); }
+  25%  { transform: translate(calc(var(--drift) * .25), -28vh) rotate(var(--r1, 10deg)) scale(1); }
+  50%  { transform: translate(calc(var(--drift) * .1), -56vh) rotate(var(--r0, -8deg)) scale(.95); }
+  75%  { transform: translate(calc(var(--drift) * .4), -84vh) rotate(var(--r1, 10deg)) scale(1.05); }
+  94%  { opacity: var(--op, .3); }
+  100% { transform: translate(var(--drift), -116vh) rotate(var(--r0, -8deg)) scale(.9); opacity: 0; }
 }
 
 /* ---------- 顶栏 ---------- */
@@ -184,24 +195,39 @@ img { image-rendering: pixelated; }
   100% { transform: none; }
 }
 
+/* ---------- 对局:上下结构(棋盘滚动,操作区钉在底部) ---------- */
+#screen-play { display: flex; flex-direction: column; height: calc(100vh - 112px); }
+@supports (height: 100dvh) {
+  #screen-play { height: calc(100dvh - 112px); }
+}
+.play-bottom { flex-shrink: 0; padding-top: 4px; }
+.legend { display: flex; justify-content: center; gap: 16px; margin: 2px 0 8px; }
+.legend-item {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 700; color: var(--ink-soft);
+}
+
 /* ---------- 棋盘 ---------- */
-.board-wrap { max-height: 46vh; overflow-y: auto; padding: 6px 2px; scroll-behavior: smooth; }
-#board { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.board-wrap {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  padding: 6px 2px; scroll-behavior: smooth;
+  display: flex; flex-direction: column;
+}
+/* 列表贴底向上生长:输入行始终紧邻下方键盘 */
+#board { display: flex; flex-direction: column; gap: 10px; align-items: center; margin-top: auto; }
 .guess-row { display: flex; align-items: center; gap: 8px; }
 .guess-row .tiles { display: flex; gap: 8px; }
 .guess-row .tile { width: 52px; height: 52px; border-radius: 14px; }
 .row-index { width: 22px; text-align: right; font-family: var(--font-pix); font-size: 14px; color: #b9aed6; }
-.row-feedback { display: flex; flex-direction: column; gap: 3px; min-width: 62px; }
-.fb-badge {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 12px; font-weight: 700; border-radius: 999px; padding: 1px 8px;
-  border: 2px solid var(--ink); background: #eee;
-  animation: badge-in .4s var(--spring-big) both;
+.row-feedback { display: flex; gap: 4px; min-width: 82px; align-items: center; }
+.peg {
+  width: 15px; height: 15px; border-radius: 5px;
+  border: 2px solid rgba(51, 41, 78, .9);
+  background: #e9e4f2; display: inline-block; flex-shrink: 0;
 }
-.fb-badge img { width: 12px; height: 12px; }
-.fb-hit { background: #b2f2bb; }
-.fb-float { background: #ffe08a; }
-.fb-none { background: #e5e0ef; color: var(--ink-soft); }
+.peg-hit { background: var(--green); }
+.peg-near { background: var(--amber); }
+.row-feedback .peg { animation: badge-in .35s var(--spring-big) both; }
 @keyframes badge-in {
   0% { transform: scale(0) rotate(-20deg); }
   70% { transform: scale(1.25) rotate(4deg); }
@@ -222,6 +248,12 @@ img { image-rendering: pixelated; }
 .counter img { width: 14px; height: 14px; }
 .counter.bump { animation: counter-bump .4s var(--spring-big); }
 @keyframes counter-bump { 50% { transform: scale(1.25); background: #ffe08a; } }
+.counter-btn {
+  cursor: pointer; font-family: inherit; color: var(--ink); background: #f2f0f7;
+  transition: transform .18s var(--spring), box-shadow .18s;
+}
+.counter-btn:hover { transform: translateY(-2px); }
+.counter-btn:active { transform: translateY(2px) scale(.94); box-shadow: 0 1px 0 rgba(51,41,78,.85); }
 
 /* ---------- 情报栏 ---------- */
 .intel-bar {
@@ -258,7 +290,26 @@ img { image-rendering: pixelated; }
 .item-btn:hover { transform: translateY(-3px) rotate(-2deg) scale(1.06); }
 .item-btn:active { transform: translateY(3px) scale(.92); box-shadow: 0 1px 0 rgba(51,41,78,.9); }
 .item-btn.used { filter: grayscale(1); opacity: .45; pointer-events: none; }
-.item-btn.item-giveup { background: linear-gradient(160deg, #f2f0f7, #ded9ea); }
+
+/* ---------- 假广告弹窗 ---------- */
+.ad-stage { position: relative; margin: 8px 0 4px; }
+.ad-gif {
+  display: block; width: 100%; max-height: 46vh; object-fit: contain;
+  border: 3px solid var(--ink); border-radius: 16px; background: #221d33;
+}
+.ad-tag {
+  position: absolute; top: 10px; left: 10px;
+  background: rgba(51, 41, 78, .88); color: #fff;
+  font-size: 11px; font-weight: 700; letter-spacing: 1px;
+  padding: 3px 10px; border-radius: 999px;
+}
+.ad-count {
+  position: absolute; top: 8px; right: 10px;
+  background: rgba(51, 41, 78, .88); color: #fff;
+  font-family: var(--font-pix); font-size: 15px;
+  min-width: 40px; padding: 4px 8px; text-align: center; border-radius: 999px;
+}
+.ad-actions { display: flex; justify-content: center; margin-top: 12px; min-height: 46px; }
 
 /* ---------- 图标键盘 ---------- */
 #keyboard, .setup-keyboard {
@@ -438,7 +489,6 @@ img { image-rendering: pixelated; }
 .counter img,
 .play-mode img,
 .stat-chip img,
-.fb-badge img,
 .intel-chip > img,
 .big-btn img,
 .card-icon {
@@ -464,14 +514,18 @@ img { image-rendering: pixelated; }
   .key { height: 56px; }
   .key img { width: 30px; height: 30px; }
   .logo-en { font-size: 26px; }
-  .board-wrap { max-height: 38vh; }
   #app { padding: 8px 10px 30px; }
 }
 @media (max-height: 740px) {
-  .board-wrap { max-height: 34vh; }
   .items-bar { margin: 6px 0 2px; }
-  .key { height: 52px; }
+  .key { height: 50px; }
+  .item-btn { height: 52px; width: 58px; }
+  .kbd-hint { margin-top: 10px; }
+  #screen-play { height: calc(100vh - 100px); }
+  @supports (height: 100dvh) { #screen-play { height: calc(100dvh - 100px); } }
 }
+
+body[data-screen="screen-play"] #app { padding-bottom: 8px; }
 
 /* 无障碍:减少动效 */
 @media (prefers-reduced-motion: reduce) {

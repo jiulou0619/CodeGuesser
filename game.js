@@ -1,5 +1,5 @@
 /* ============================================================
-   泡泡解码 CodePop — 异步好友对战猜数字
+   CodePop 解码对决 — 异步好友对战猜图标密码
    纯静态实现:密码通过混淆链接在好友间传递,无需服务器
    ============================================================ */
 'use strict';
@@ -25,10 +25,16 @@ const ICON_PATH = id => `assets/icons/${id}.png`;
 
 /* ---------------- 音效 ---------------- */
 const SFX_FILES = {
-  pop1: 'pop1', pop2: 'pop2', pop3: 'pop3', pop4: 'pop4',
-  popSmall: 'pop-small', popBig: 'pop-big',
-  start: 'start', cheer: 'cheer', combo: 'combo',
-  levelup: 'levelup', meow: 'meow', minus: 'minus',
+  start: 'game-start',        // 开局
+  ui: 'ui-interact',          // 键盘输入/轻交互
+  button: 'button',           // 按钮
+  completed: 'completed',     // 一无所获的猜测 / 失败收尾
+  ability: 'ability',         // 道具
+  right: 'right-guess',       // 猜中(有绿块)
+  right2: 'right-guess2',     // 沾边(只有黄块)
+  daily: 'daily-completed',   // 每日挑战通关
+  win: 'game-complete',       // 通关/获胜
+  meow: 'meow',               // 彩蛋
 };
 const SFX = {};
 for (const [k, f] of Object.entries(SFX_FILES)) {
@@ -44,7 +50,14 @@ function sfx(name, vol = 0.55) {
     a.play().catch(() => {});
   } catch (e) { /* 忽略自动播放限制 */ }
 }
-const typePop = () => sfx(['pop1', 'pop2', 'pop3', 'pop4'][(Math.random() * 4) | 0], 0.4);
+const typePop = () => sfx('ui', 0.4);
+
+// 所有普通按钮统一按键音(键盘图标键和道具键有自己的音效)
+document.addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (!btn || btn.classList.contains('key') || btn.classList.contains('item-btn')) return;
+  sfx('button', 0.45);
+}, true);
 
 /* ---------------- 本地存档 ---------------- */
 const STORE_KEY = 'codepop-v1';
@@ -122,7 +135,7 @@ const dailyNumber = () => {
 };
 const dailyCode = () => randomCode(seededRng('codepop-' + todayStr()));
 
-/* ---------------- 反馈计算(A=命中 B=冒泡) ---------------- */
+/* ---------------- 反馈计算(a=绿块:图标位置全对 b=黄块:图标对位置错) ---------------- */
 function judge(secret, guess) {
   let a = 0, b = 0;
   for (let i = 0; i < CODE_LEN; i++) {
@@ -161,8 +174,16 @@ function openModal(html) {
   mask.hidden = false;
   return box;
 }
-function closeModal() { $('#modal-mask').hidden = true; }
-$('#modal-mask').addEventListener('click', e => { if (e.target.id === 'modal-mask') closeModal(); });
+function closeModal() {
+  const mask = $('#modal-mask');
+  mask.hidden = true;
+  delete mask.dataset.lock;
+  $('#modal-box').innerHTML = '';
+  clearInterval(adTimerId); // 任何关闭路径都终止广告倒计时,防止奖励落到别的对局
+}
+$('#modal-mask').addEventListener('click', e => {
+  if (e.target.id === 'modal-mask' && !e.target.dataset.lock) closeModal();
+});
 
 function confetti(n = 90) {
   const zone = $('#confetti-zone');
@@ -184,6 +205,7 @@ const SCREENS = ['screen-home', 'screen-setup', 'screen-play', 'screen-inbox', '
 function showScreen(id) {
   SCREENS.forEach(s => $('#' + s).hidden = (s !== id));
   $('#btn-back').hidden = (id === 'screen-home');
+  document.body.dataset.screen = id;
   window.scrollTo(0, 0);
 }
 
@@ -197,23 +219,27 @@ const game = {
   guesses: [],         // [{code, a, b}]
   input: [],
   penalty: 0,
-  items: { magnet: true, scope: true, cat: true },
+  items: { magnet: true, scope: true, ad: true },
   marks: {},           // idx -> '' | 'off' | 'yes'
   revealed: {},        // pos -> iconIdx (望远镜)
   startTime: 0,
   timerId: 0,
   duelCtx: null,       // 对战上下文(收到的payload)
   finished: false,
+  pendingEnd: false,   // 终局猜测已提交、正在播放揭示动画
+  seq: 0,              // 对局序号,防止异步奖励落到后开的对局
 };
+let gameSeq = 0;
 const stepCount = () => game.guesses.length + game.penalty;
 
 function startGame(mode, secret, duelCtx = null) {
   Object.assign(game, {
-    active: true, finished: false, mode, secret,
+    active: true, finished: false, pendingEnd: false, mode, secret,
     guesses: [], input: [], penalty: 0,
-    items: { magnet: true, scope: true, cat: true },
+    items: { magnet: true, scope: true, ad: true },
     marks: {}, revealed: {},
     duelCtx, startTime: Date.now(),
+    seq: ++gameSeq,
   });
   clearInterval(game.timerId);
   game.timerId = setInterval(updateTimer, 500);
@@ -227,7 +253,7 @@ function startGame(mode, secret, duelCtx = null) {
   $('#play-mode').innerHTML = modeLabel;
   $('#intel-bar').hidden = true;
   $('#intel-bar').innerHTML = '';
-  ['magnet', 'scope', 'cat'].forEach(k => $('#item-' + k).classList.remove('used'));
+  ['magnet', 'scope', 'ad'].forEach(k => $('#item-' + k).classList.remove('used'));
   buildKeyboard();
   $('#board').innerHTML = '';
   appendInputRow();
@@ -239,7 +265,7 @@ function startGame(mode, secret, duelCtx = null) {
 function updateTimer() {
   if (!game.active) return;
   const s = ((Date.now() - game.startTime) / 1000) | 0;
-  $('#counter-timer').innerHTML = `<img src="assets/icons/refresh.png">${(s / 60) | 0}:${String(s % 60).padStart(2, '0')}`;
+  $('#counter-timer').innerHTML = `<img src="assets/icons/clock.png">${(s / 60) | 0}:${String(s % 60).padStart(2, '0')}`;
 }
 function updateCounters(bump = false) {
   const c = $('#counter-steps');
@@ -286,7 +312,7 @@ function attachKeyBehavior(k, idx) {
 function cycleMark(idx) {
   const cur = game.marks[idx] || '';
   game.marks[idx] = cur === '' ? 'off' : cur === 'off' ? 'yes' : '';
-  sfx('popSmall', 0.35);
+  sfx('ui', 0.35);
   syncKeyMarks();
 }
 function syncKeyMarks() {
@@ -331,7 +357,7 @@ function inputDelete() {
   t.className = 'tile empty';
   t.style.background = '';
   t.innerHTML = '';
-  sfx('popSmall', 0.3);
+  sfx('ui', 0.3);
 }
 function shakeInputRow() {
   inputRowTiles().forEach(t => {
@@ -341,14 +367,20 @@ function shakeInputRow() {
 
 /* ---------------- 提交 ---------------- */
 function submitGuess() {
-  if (!game.active || game.finished) return;
+  if (!game.active || game.finished || game.pendingEnd) return;
   if (game.input.length < CODE_LEN) {
-    toast('先摆满 4 个图标'); shakeInputRow(); sfx('minus', 0.4); return;
+    toast('先摆满 4 个图标'); shakeInputRow(); sfx('ui', 0.4); return;
   }
   const code = game.input.join('');
+  if (game.guesses.some(g => g.code === code)) {
+    toast('一模一样的组合已经猜过啦,再想想!');
+    shakeInputRow(); sfx('ui', 0.45);
+    return; // 不消耗步数,保留当前输入让玩家修改
+  }
   const { a, b } = judge(game.secret, code);
   game.guesses.push({ code, a, b });
   game.input = [];
+  if (a === CODE_LEN || game.guesses.length >= MAX_GUESSES) game.pendingEnd = true; // 终局锁:揭示动画期间禁用道具/提交
 
   const row = $('#board .input-row');
   row.classList.remove('input-row');
@@ -360,9 +392,9 @@ function submitGuess() {
   setTimeout(() => {
     fb.innerHTML = feedbackHTML(a, b);
     if (a === CODE_LEN) { /* 胜利音效在 finish 里 */ }
-    else if (a >= 2) sfx('combo', 0.5);
-    else if (a + b === 0) sfx('minus', 0.35);
-    else sfx('popBig', 0.45);
+    else if (a > 0) sfx('right', 0.55);
+    else if (b > 0) sfx('right2', 0.5);
+    else sfx('completed', 0.4);
   }, CODE_LEN * 130 + 120);
 
   updateCounters(true);
@@ -373,11 +405,13 @@ function submitGuess() {
     appendInputRow();
   }, CODE_LEN * 130 + 350);
 }
+/* 反馈:4 个小方块,绿=图标位置全对,黄=图标对位置错,灰=没中 */
 function feedbackHTML(a, b) {
-  if (a === 0 && b === 0) return `<span class="fb-badge fb-none">全空</span>`;
   let h = '';
-  if (a > 0) h += `<span class="fb-badge fb-hit"><img src="assets/icons/hit.png">命中 ${a}</span>`;
-  if (b > 0) h += `<span class="fb-badge fb-float" style="animation-delay:.12s"><img src="assets/icons/change.png">冒泡 ${b}</span>`;
+  for (let i = 0; i < CODE_LEN; i++) {
+    const cls = i < a ? ' peg-hit' : i < a + b ? ' peg-near' : '';
+    h += `<span class="peg${cls}" style="animation-delay:${(i * .07).toFixed(2)}s"></span>`;
+  }
   return h;
 }
 
@@ -388,7 +422,7 @@ function addIntel(html, good) {
   bar.appendChild(el('span', 'intel-chip ' + (good ? 'good' : 'bad'), html));
 }
 $('#item-magnet').addEventListener('click', () => {
-  if (!game.active || game.finished || !game.items.magnet) return;
+  if (!game.active || game.finished || game.pendingEnd || !game.items.magnet) return;
   let grid = '';
   ICONS.forEach((ic, idx) => {
     grid += `<button class="key" data-pick="${idx}" style="background:${ic.color}"><span class="key-num">${idx}</span><img src="${ICON_PATH(ic.id)}"></button>`;
@@ -410,19 +444,19 @@ $('#item-magnet').addEventListener('click', () => {
     addIntel(`<img src="assets/icons/magnet.png">${chipIconHTML(idx)}${inCode ? '在密码里!' : '不在'}`, inCode);
     updateCounters(true);
     closeModal();
-    sfx(inCode ? 'combo' : 'minus', 0.5);
+    sfx('ability', 0.55);
     toast(inCode ? `${ICONS[idx].name} 在密码里!` : `${ICONS[idx].name} 不在密码里`, ICON_PATH('magnet'));
   }));
 });
 $('#item-scope').addEventListener('click', () => {
-  if (!game.active || game.finished || !game.items.scope) return;
+  if (!game.active || game.finished || game.pendingEnd || !game.items.scope) return;
   let picks = '';
   for (let i = 0; i < CODE_LEN; i++) {
     picks += `<div class="tile" data-pos="${i}">${i + 1}</div>`;
   }
   const box = openModal(`
     <h3>🔭 望远镜偷看</h3>
-    <p>选一个位置,直接看到那里的图标(代价:+2 步,慎用!)</p>
+    <p>选一个位置,直接看到那里的图标(代价:+3 步,慎用!)</p>
     <div class="pos-pick">${picks}</div>
     <div class="modal-actions"><button class="big-btn" id="m-cancel">先不用</button></div>`);
   box.querySelector('#m-cancel').addEventListener('click', closeModal);
@@ -430,7 +464,7 @@ $('#item-scope').addEventListener('click', () => {
     const pos = +t.dataset.pos;
     const idx = +game.secret[pos];
     game.items.scope = false;
-    game.penalty += 2;
+    game.penalty += 3;
     $('#item-scope').classList.add('used');
     game.revealed[pos] = idx;
     game.marks[idx] = 'yes';
@@ -438,26 +472,63 @@ $('#item-scope').addEventListener('click', () => {
     addIntel(`<img src="assets/icons/binoculars.png">第${pos + 1}位 = ${chipIconHTML(idx)}`, true);
     updateCounters(true);
     closeModal();
-    sfx('levelup', 0.4);
+    sfx('ability', 0.5);
     toast(`第 ${pos + 1} 位是 ${ICONS[idx].name}!`, ICON_PATH('binoculars'));
   }));
 });
-$('#item-cat').addEventListener('click', () => {
-  if (!game.active || game.finished || !game.items.cat) return;
+
+/* ---------------- 假广告:看 15 秒,3 秒后可跳过(跳过没奖励) ---------------- */
+let adTimerId = 0;
+$('#item-ad').addEventListener('click', () => {
+  if (!game.active || game.finished || game.pendingEnd || !game.items.ad) return;
   const candidates = ICONS.map((_, i) => i)
     .filter(i => !game.secret.includes(String(i)) && game.marks[i] !== 'off');
-  if (!candidates.length) { toast('猫咪嗅了嗅:没有新线索了', ICON_PATH('cat')); return; }
-  const idx = candidates[(Math.random() * candidates.length) | 0];
-  game.items.cat = false;
-  $('#item-cat').classList.add('used');
-  game.marks[idx] = 'off';
-  syncKeyMarks();
-  addIntel(`<img src="assets/icons/cat.png">${chipIconHTML(idx)}不在(喵)`, false);
-  sfx('meow', 0.6);
-  toast(`猫咪说:${ICONS[idx].name} 不在密码里,喵~`, ICON_PATH('cat'));
+  if (!candidates.length) { toast('没有可排除的图标啦,广告小猫也帮不上忙', ICON_PATH('video')); return; }
+  const seqAtOpen = game.seq;
+  const gif = Math.random() < 0.5 ? 'cat_add.gif' : 'dance.gif';
+  openModal(`
+    <h3>📺 广告时间</h3>
+    <div class="ad-stage">
+      <img class="ad-gif" src="assets/ads/${gif}" alt="广告">
+      <span class="ad-tag">广告 · AD</span>
+      <span class="ad-count" id="ad-count">15</span>
+    </div>
+    <p style="text-align:center">看完广告,小猫帮你<b>排除一个不在密码里的图标</b></p>
+    <div class="ad-actions" id="ad-actions"></div>`);
+  $('#modal-mask').dataset.lock = '1';
+  let left = 15;
+  clearInterval(adTimerId);
+  const closeAd = reward => {
+    closeModal(); // closeModal 会清倒计时和锁
+    if (!reward) { toast('广告没看完,小猫抱着线索走了…', ICON_PATH('cat')); return; }
+    // 对局已结束/已切换时,奖励作废
+    if (!game.active || game.finished || game.pendingEnd || game.seq !== seqAtOpen) return;
+    const idx = candidates[(Math.random() * candidates.length) | 0];
+    game.items.ad = false;
+    $('#item-ad').classList.add('used');
+    game.marks[idx] = 'off';
+    syncKeyMarks();
+    addIntel(`<img src="assets/icons/video.png">${chipIconHTML(idx)}不在(喵)`, false);
+    sfx('ability', 0.55);
+    sfx('meow', 0.6);
+    toast(`广告小猫说:${ICONS[idx].name} 不在密码里!`, ICON_PATH('cat'));
+  };
+  adTimerId = setInterval(() => {
+    left--;
+    const cnt = $('#ad-count');
+    if (!cnt) { clearInterval(adTimerId); return; } // 弹窗已被别处关闭
+    cnt.textContent = left;
+    if (left === 12) {
+      const skip = el('button', 'big-btn', '跳过广告(放弃奖励)');
+      skip.addEventListener('click', () => closeAd(false));
+      $('#ad-actions').appendChild(skip);
+    }
+    if (left <= 0) closeAd(true);
+  }, 1000);
 });
-$('#item-giveup').addEventListener('click', () => {
-  if (!game.active || game.finished) return;
+
+$('#btn-giveup').addEventListener('click', () => {
+  if (!game.active || game.finished || game.pendingEnd) return;
   const box = openModal(`
     <h3>👻 确定认输?</h3>
     <p>会直接揭晓答案${game.mode === 'daily' ? ',并中断每日连胜' : ''}${game.mode.startsWith('duel') ? ',对战将记为「未破解」' : ''}。</p>
@@ -474,19 +545,20 @@ function finishGame(win, surrendered = false) {
   if (game.finished) return;
   game.finished = true;
   game.active = false;
+  closeModal(); // 关掉还开着的弹窗(含广告),对局结束一切归零
   clearInterval(game.timerId);
   const steps = win ? stepCount() : FAIL_STEPS;
   const timeSec = ((Date.now() - game.startTime) / 1000) | 0;
   const grid = game.guesses.map(g => g.a + ',' + g.b);
 
   if (win) {
-    sfx('cheer', 0.6);
+    sfx(game.mode === 'daily' ? 'daily' : 'win', 0.6);
     confetti();
     document.querySelectorAll('#board .guess-row:last-child .tile').forEach((t, i) => {
       setTimeout(() => t.classList.add('win-dance'), i * 90);
     });
   } else {
-    sfx('minus', 0.5);
+    sfx('completed', 0.45);
   }
 
   // 存档统计
@@ -495,7 +567,7 @@ function finishGame(win, surrendered = false) {
     store.wins++;
     if (!store.best || steps < store.best) {
       store.best = steps;
-      if (store.played > 1) setTimeout(() => { toast('新纪录!', ICON_PATH('ranking')); sfx('levelup', 0.5); }, 1200);
+      if (store.played > 1) setTimeout(() => toast('新纪录!', ICON_PATH('ranking')), 1200);
     }
   }
   if (game.mode === 'daily') {
@@ -557,10 +629,10 @@ function renderResult({ win, steps, timeSec, surrendered }) {
   let html = '';
 
   if (game.mode === 'daily' || game.mode === 'free') {
-    const title = win ? ['密码破解!', '泡泡全破!', '解码天才!'][(Math.random() * 3) | 0] : (surrendered ? '下次再战' : '泡泡逃走了…');
+    const title = win ? ['密码破解!', '全部猜中!', '解码天才!'][(Math.random() * 3) | 0] : (surrendered ? '下次再战' : '密码逃走了…');
     const shareText = game.mode === 'daily'
-      ? `泡泡解码 CodePop 每日挑战 #${dailyNumber()}\n${win ? `${steps} 步破解 ${'⭐'.repeat(starCount(steps))}` : '未能破解 💦'}\n${shareGrid(grid)}\n${baseUrl()}`
-      : `我在泡泡解码用 ${stepsLabel(steps)} 破解了随机密码!\n${shareGrid(grid)}\n你也来试试:${baseUrl()}`;
+      ? `CodePop 解码对决 每日挑战 #${dailyNumber()}\n${win ? `${steps} 步破解 ${'⭐'.repeat(starCount(steps))}` : '未能破解 💦'}\n${shareGrid(grid)}\n${baseUrl()}`
+      : `我在 CodePop 用 ${stepsLabel(steps)} 破解了随机密码!\n${shareGrid(grid)}\n你也来试试:${baseUrl()}`;
     html = `
       <img class="card-icon" src="assets/icons/${win ? 'crown' : 'ghost'}.png">
       <div class="card-title">${title}</div>
@@ -601,7 +673,7 @@ function renderResult({ win, steps, timeSec, surrendered }) {
     $('#r-report').addEventListener('click', () => {
       const link = duelLink({ t: 'c2f', an: p.n, bn: myName(), ac: p.c, bs: myResult.steps, bg: grid });
       showShareModal('战报链接已生成', `把链接发给 ${esc(p.n)},TA 就能看到你的战绩`, link,
-        `我${win ? `只用 ${steps} 步就` : '没能'}破解了你的泡泡密码!\n${shareGrid(grid)}\n${link}`);
+        `我${win ? `只用 ${steps} 步就` : '没能'}破解了你的图标密码!\n${shareGrid(grid)}\n${link}`);
     });
     $('#r-home').addEventListener('click', goHome);
   }
@@ -616,7 +688,7 @@ function renderResult({ win, steps, timeSec, surrendered }) {
     if (verdict === 'me') store.duelWins++;
     save();
     const link = duelLink({ t: 'c3', an: p.an, bn: p.bn, as, bs });
-    const shareText = `泡泡解码对决判决书 ⚖️\n${esc(p.an)}:${stepsLabel(as)} vs ${esc(p.bn)}:${stepsLabel(bs)}\n${verdictText(verdict, p.an, p.bn)}\n${link}`;
+    const shareText = `CodePop 对决判决书 ⚖️\n${esc(p.an)}:${stepsLabel(as)} vs ${esc(p.bn)}:${stepsLabel(bs)}\n${verdictText(verdict, p.an, p.bn)}\n${link}`;
     card.innerHTML = `
       ${verdictHTML(verdict, { name: p.an, steps: as }, { name: p.bn, steps: bs })}
       <div class="card-sub">把判决书发给 ${esc(p.bn)},让 TA 心服口服!</div>
@@ -626,7 +698,7 @@ function renderResult({ win, steps, timeSec, surrendered }) {
         <button class="big-btn blue" id="r-rematch"><img src="assets/icons/sword.png">再战一局</button>
         <button class="big-btn" id="r-home"><img src="assets/icons/arrow-left.png">回主页</button>
       </div>`;
-    if (verdict === 'me') { sfx('levelup', 0.5); confetti(60); }
+    if (verdict === 'me') { sfx('win', 0.5); confetti(60); }
     $('#r-share').addEventListener('click', () => shareOrCopy(shareText));
     $('#r-rematch').addEventListener('click', () => openSetup('c1'));
     $('#r-home').addEventListener('click', goHome);
@@ -658,13 +730,13 @@ function verdictHTML(v, me, them) {
    出题(新对战 / 反击)
    ============================================================ */
 const setup = { picks: [], mode: 'c1', ctx: null };
-function myName() { return store.name || '神秘泡泡'; }
+function myName() { return store.name || '神秘玩家'; }
 
 function openSetup(mode, ctx = null) {
   setup.picks = [];
   setup.mode = mode;
   setup.ctx = ctx;
-  $('#setup-title').textContent = mode === 'counter' ? '布置反击密码!' : '布置你的泡泡密码';
+  $('#setup-title').textContent = mode === 'counter' ? '布置反击密码!' : '布置你的图标密码';
   $('#setup-name').value = store.name;
   $('#setup-msg').value = '';
   renderSetupSlots();
@@ -683,7 +755,7 @@ function renderSetupSlots() {
       t.style.background = ICONS[idx].color;
       t.innerHTML = `<img src="${ICON_PATH(ICONS[idx].id)}">`;
       t.title = '点击移除';
-      t.addEventListener('click', () => { setup.picks.splice(i, 1); sfx('popSmall', 0.35); renderSetupSlots(); syncSetupKeys(); });
+      t.addEventListener('click', () => { setup.picks.splice(i, 1); sfx('ui', 0.35); renderSetupSlots(); syncSetupKeys(); });
       wrap.appendChild(t);
     }
   }
@@ -718,7 +790,6 @@ function syncSetupKeys() {
 }
 $('#btn-setup-random').addEventListener('click', () => {
   setup.picks = randomCode().split('').map(Number);
-  sfx('popBig', 0.5);
   renderSetupSlots();
   syncSetupKeys();
 });
@@ -734,11 +805,11 @@ $('#btn-setup-go').addEventListener('click', () => {
     const link = duelLink({ t: 'c2', an: orig.n, bn: myName(), ac: orig.c, c: code, bs: myResult.steps, m: msg });
     const bsLabel = stepsLabel(myResult.steps);
     showShareModal('反击链接已生成!', `发给 ${esc(orig.n)}:TA 会先看到你的战绩(${bsLabel}),再挑战你的密码,一决胜负!`, link,
-      `我${myResult.steps >= FAIL_STEPS ? '没能破解' : `用 ${myResult.steps} 步破解了`}你的泡泡密码,现在轮到你了!敢接招吗?\n${link}`);
+      `我${myResult.steps >= FAIL_STEPS ? '没能破解' : `用 ${myResult.steps} 步破解了`}你的图标密码,现在轮到你了!敢接招吗?\n${link}`);
   } else {
     const link = duelLink({ t: 'c1', n: myName(), c: code, m: msg });
     showShareModal('挑战链接已生成!', '发给好友,TA 打开就能开猜。你自己可别点开偷看哦~', link,
-      `我在「泡泡解码」布下了一道密码,敢来破译吗?🫧\n${link}`);
+      `我在「CodePop」藏了一组图标密码,敢来破译吗?\n${link}`);
   }
 });
 function showShareModal(title, sub, link, shareText) {
@@ -751,7 +822,7 @@ function showShareModal(title, sub, link, shareText) {
       ${navigator.share ? '<button class="big-btn blue" id="s-share"><img src="assets/icons/share.png">分享</button>' : ''}
     </div>
     <div class="modal-actions"><button class="big-btn" id="s-home"><img src="assets/icons/arrow-left.png">回主页</button></div>`);
-  sfx('levelup', 0.4);
+  sfx('ability', 0.45);
   box.querySelector('#s-copy').addEventListener('click', () => copyText(shareText));
   if (box.querySelector('#s-share')) box.querySelector('#s-share').addEventListener('click', () => navigator.share({ text: shareText }).catch(() => {}));
   box.querySelector('#s-home').addEventListener('click', () => { closeModal(); goHome(); });
@@ -767,7 +838,7 @@ function handleIncoming(p) {
       <img class="card-icon" src="assets/icons/sword.png">
       <div class="card-title">${esc(p.n)} 向你发起挑战!</div>
       ${p.m ? `<div class="card-msg">“${esc(p.m)}”</div>` : ''}
-      <div class="card-sub">TA 藏了一组 4 个图标的密码。<br>每次猜测会告诉你:<b>命中</b>(图标对位置也对)和<b>冒泡</b>(图标对位置不对)的数量。<br>用最少的步数破解它!</div>
+      <div class="card-sub">TA 藏了一组 4 个图标的密码。<br>每猜一次,小方块帮你打分:<br><span class="peg peg-hit" style="vertical-align:-2px"></span> 图标对,位置也对&nbsp;&nbsp;<span class="peg peg-near" style="vertical-align:-2px"></span> 图标对,位置不对<br>用最少的步数破解它!</div>
       <div class="card-actions">
         <button class="big-btn primary" id="i-go"><img src="assets/icons/sword.png">开始破解</button>
         <button class="big-btn" id="i-home"><img src="assets/icons/arrow-left.png">先不了</button>
@@ -815,7 +886,7 @@ function handleIncoming(p) {
         <button class="big-btn primary" id="i-rematch"><img src="assets/icons/sword.png">再来一局</button>
         <button class="big-btn" id="i-home"><img src="assets/icons/arrow-left.png">回主页</button>
       </div>`;
-    if (v === 'me') { setTimeout(() => { confetti(70); sfx('cheer', 0.5); }, 400); }
+    if (v === 'me') { setTimeout(() => { confetti(70); sfx('win', 0.5); }, 400); }
     $('#i-rematch').addEventListener('click', () => openSetup('c1'));
     $('#i-home').addEventListener('click', goHome);
   }
@@ -836,7 +907,7 @@ function renderHomeStats() {
   if (store.wins > 0) chips.push(`<span class="stat-chip"><img src="assets/icons/tick.png">破解 <b>${store.wins}</b> 次</span>`);
   if (store.best > 0) chips.push(`<span class="stat-chip"><img src="assets/icons/ranking.png">最佳 <b>${store.best}</b> 步</span>`);
   if (store.duelWins > 0) chips.push(`<span class="stat-chip"><img src="assets/icons/crown.png">对战赢 <b>${store.duelWins}</b> 场</span>`);
-  s.innerHTML = chips.join('') || `<span class="stat-chip">🫧 第一次玩?点右上角 <b>?</b> 看玩法</span>`;
+  s.innerHTML = chips.join('') || `<span class="stat-chip">✨ 第一次玩?点右上角 <b>?</b> 看玩法</span>`;
 }
 function renderHeroTiles() {
   const wrap = $('#hero-tiles');
@@ -875,7 +946,7 @@ $('#btn-daily').addEventListener('click', () => {
   const done = store.daily[today];
   if (done) {
     // 已完成:直接展示战报
-    const shareText = `泡泡解码 CodePop 每日挑战 #${dailyNumber()}\n${done.win ? `${done.steps} 步破解 ${'⭐'.repeat(starCount(done.steps))}` : '未能破解 💦'}\n${shareGrid(done.grid)}\n${baseUrl()}`;
+    const shareText = `CodePop 解码对决 每日挑战 #${dailyNumber()}\n${done.win ? `${done.steps} 步破解 ${'⭐'.repeat(starCount(done.steps))}` : '未能破解 💦'}\n${shareGrid(done.grid)}\n${baseUrl()}`;
     $('#result-card').innerHTML = `
       <img class="card-icon" src="assets/icons/sun.png">
       <div class="card-title">今日挑战已完成</div>
@@ -902,25 +973,25 @@ $('#btn-sound').addEventListener('click', () => {
   store.sound = !store.sound;
   save();
   syncSoundBtn();
-  if (store.sound) sfx('popBig', 0.5);
+  if (store.sound) sfx('button', 0.5);
 });
 $('#logo').addEventListener('click', () => { sfx('meow', 0.6); });
 
 $('#btn-help').addEventListener('click', () => {
-  const ex = judge('0123', '0247');
   openModal(`
-    <h3>🫧 怎么玩</h3>
-    <p><b>目标:</b>密码是 <b>4 个不重复</b>的图标(相当于数字 0~9)。用最少的步数猜出<b>是哪些图标</b>以及<b>排列顺序</b>。</p>
-    <p><b>每次猜测后会得到:</b><br>
-    <span class="mark-demo yes">命中</span> 图标对、位置也对的个数<br>
-    <span class="mark-demo" style="background:#ffe08a">冒泡</span> 图标对、但位置不对的个数<br>
-    但不会告诉你具体是哪几个——这就是推理的乐趣!</p>
+    <h3>🎯 怎么玩</h3>
+    <p><b>目标:</b>密码是 <b>4 个不重复</b>的图标。用最少的步数,猜出<b>是哪 4 个</b>、<b>按什么顺序</b>排的。</p>
+    <p><b>每猜一次,右边的 4 个小方块给你打分:</b><br>
+    <span class="peg peg-hit" style="vertical-align:-2px"></span> <b>绿块</b>:有 1 个图标猜对了,位置也对<br>
+    <span class="peg peg-near" style="vertical-align:-2px"></span> <b>黄块</b>:有 1 个图标在密码里,但位置放错了<br>
+    <span class="peg" style="vertical-align:-2px"></span> <b>灰块</b>:什么都没中</p>
     <div class="help-example">
       ${iconTileHTML(0)}${iconTileHTML(2)}${iconTileHTML(4)}${iconTileHTML(7)}
-      <div class="help-fb">${feedbackHTML(ex.a, ex.b)}</div>
+      <div class="help-fb">${feedbackHTML(2, 0)}</div>
     </div>
-    <p style="text-align:center;font-size:12.5px">例:密码是 🍎⭐🐱🌸 时,猜 🍎⭐🍀🌙 → 命中2</p>
-    <p><b>道具</b>(用了会加步数,慎用):🧲 问图标在不在 · 🔭 偷看一个位置 · 🐱 免费排除一个</p>
+    <p style="text-align:center;font-size:12.5px">例:密码是 🍎⭐🐱🌸,你猜 🍎⭐🍀🌙 → 两个绿块(🍎⭐位置全对)</p>
+    <p>注意:方块<b>不会告诉你对的是哪一个</b>——推理出来才过瘾!</p>
+    <p><b>道具:</b>🧲 磁铁问一个图标在不在(+1步) · 🔭 望远镜偷看一个位置(+3步) · 📺 看 15 秒小广告,免费排除一个不在的图标</p>
     <p><b>小技巧:</b>长按或右键键盘图标,可以标记「排除/锁定」帮助推理。</p>
     <p><b>好友对战:</b>布置密码 → 发链接给好友 → TA 破解后出题反击 → 你迎战 → 步数少者赢!全程异步,随时接招。</p>
     <div class="modal-actions"><button class="big-btn primary" id="m-ok">明白了!</button></div>`)
@@ -929,6 +1000,7 @@ $('#btn-help').addEventListener('click', () => {
 
 /* ---------------- 物理键盘 ---------------- */
 document.addEventListener('keydown', e => {
+  if (!$('#modal-mask').hidden) return; // 弹窗打开时不接受棋盘输入
   if (!$('#screen-play').hidden && game.active && !game.finished) {
     if (/^[0-9]$/.test(e.key)) inputIcon(+e.key);
     else if (e.key === 'Backspace') inputDelete();
@@ -936,15 +1008,20 @@ document.addEventListener('keydown', e => {
   }
 });
 
-/* ---------------- 背景泡泡 ---------------- */
-(function spawnBubbles() {
-  const zone = $('#bubbles-bg');
-  for (let i = 0; i < 14; i++) {
-    const b = el('div', 'bg-bubble');
-    const size = 18 + Math.random() * 70;
-    b.style.cssText = `left:${Math.random() * 100}vw;width:${size}px;height:${size}px;` +
-      `animation-duration:${9 + Math.random() * 14}s;animation-delay:${-Math.random() * 20}s;`;
-    zone.appendChild(b);
+/* ---------------- 背景:飞行的小图标 ---------------- */
+(function spawnFloaters() {
+  const zone = $('#bg-zone');
+  for (let i = 0; i < 13; i++) {
+    const ic = ICONS[(Math.random() * ICONS.length) | 0];
+    const f = el('div', 'bg-float', `<img src="${ICON_PATH(ic.id)}" alt="">`);
+    const size = 26 + Math.random() * 28;
+    f.style.cssText = `left:${(Math.random() * 94) | 0}vw;width:${size | 0}px;height:${size | 0}px;` +
+      `background:${ic.color};` +
+      `--drift:${(Math.random() * 140 - 70) | 0}px;` +
+      `--r0:${(Math.random() * 26 - 13) | 0}deg;--r1:${(Math.random() * 26 - 13) | 0}deg;` +
+      `--op:${(0.16 + Math.random() * 0.2).toFixed(2)};` +
+      `animation-duration:${(14 + Math.random() * 16) | 0}s;animation-delay:${-(Math.random() * 30) | 0}s;`;
+    zone.appendChild(f);
   }
 })();
 

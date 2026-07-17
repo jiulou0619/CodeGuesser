@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>泡泡解码 CodePop · 好友异步对战猜数字</title>
-<meta name="description" content="Q弹像素风猜数字对战游戏 —— 出题给好友,异步破解,无需服务器!">
+<title>CodePop 解码对决 · 好友异步猜图标</title>
+<meta name="description" content="Q弹像素风图标解码对战游戏 —— 出题给好友,异步破解,无需服务器!">
 <link rel="icon" type="image/png" href="assets/icons/star.png">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div id="bubbles-bg" aria-hidden="true"></div>
+<div id="bg-zone" aria-hidden="true"></div>
 
 <!-- ============ 顶栏 ============ -->
 <header id="topbar">
   <button class="icon-btn" id="btn-back" title="返回" hidden><img src="assets/icons/arrow-left.png" alt="返回"></button>
   <div id="logo" title="喵?">
     <span class="logo-en">Code<em>Pop</em></span>
-    <span class="logo-cn">泡泡解码</span>
+    <span class="logo-cn">解码对决</span>
   </div>
   <div class="topbar-right">
     <button class="icon-btn" id="btn-sound" title="音效开关"><img src="assets/icons/volume.png" alt="音效"></button>
@@ -30,7 +30,7 @@
   <section class="screen" id="screen-home">
     <div class="home-hero">
       <div class="hero-tiles" id="hero-tiles"></div>
-      <p class="hero-sub">破译好友的泡泡密码,步数少者称王!</p>
+      <p class="hero-sub">破解好友藏起来的图标密码,步数少者称王!</p>
     </div>
     <div class="home-menu">
       <button class="menu-btn menu-duel" id="btn-duel">
@@ -54,7 +54,7 @@
 
   <!-- ============ 出题(对战/反击) ============ -->
   <section class="screen" id="screen-setup" hidden>
-    <h2 class="screen-title" id="setup-title">布置你的泡泡密码</h2>
+    <h2 class="screen-title" id="setup-title">布置你的图标密码</h2>
     <p class="screen-hint">挑 4 个不重复的图标,好友要一步步猜出它们和排列顺序</p>
     <div class="setup-slots" id="setup-slots"></div>
     <div class="setup-keyboard" id="setup-keyboard"></div>
@@ -72,27 +72,31 @@
       <div class="play-mode" id="play-mode"></div>
       <div class="play-counters">
         <span class="counter" id="counter-steps" title="步数(含道具代价)"><img src="assets/icons/hit.png" alt="">0 步</span>
-        <span class="counter" id="counter-timer"><img src="assets/icons/refresh.png" alt="">0:00</span>
+        <span class="counter" id="counter-timer"><img src="assets/icons/clock.png" alt="">0:00</span>
+        <button class="counter counter-btn" id="btn-giveup" title="认输并查看答案"><img src="assets/icons/flag.png" alt="">认输</button>
       </div>
     </div>
     <div class="intel-bar" id="intel-bar" hidden></div>
     <div class="board-wrap"><div id="board"></div></div>
-    <div class="items-bar" id="items-bar">
-      <button class="item-btn" id="item-magnet" title="磁铁:问一个图标在不在密码里(+1步)">
-        <img src="assets/icons/magnet.png" alt="磁铁"><span class="item-cost">+1步</span>
-      </button>
-      <button class="item-btn" id="item-scope" title="望远镜:偷看一个位置的图标(+2步)">
-        <img src="assets/icons/binoculars.png" alt="望远镜"><span class="item-cost">+2步</span>
-      </button>
-      <button class="item-btn" id="item-cat" title="猫咪:免费帮你排除一个不在密码里的图标">
-        <img src="assets/icons/cat.png" alt="猫咪"><span class="item-cost">免费</span>
-      </button>
-      <button class="item-btn item-giveup" id="item-giveup" title="认输并查看答案">
-        <img src="assets/icons/ghost.png" alt="认输"><span class="item-cost">认输</span>
-      </button>
+    <div class="play-bottom">
+      <div class="legend">
+        <span class="legend-item"><i class="peg peg-hit"></i>图标对,位置也对</span>
+        <span class="legend-item"><i class="peg peg-near"></i>图标对,位置不对</span>
+      </div>
+      <div class="items-bar" id="items-bar">
+        <button class="item-btn" id="item-magnet" title="磁铁:问一个图标在不在密码里(+1步)">
+          <img src="assets/icons/magnet.png" alt="磁铁"><span class="item-cost">+1步</span>
+        </button>
+        <button class="item-btn" id="item-scope" title="望远镜:偷看一个位置的图标(+3步)">
+          <img src="assets/icons/binoculars.png" alt="望远镜"><span class="item-cost">+3步</span>
+        </button>
+        <button class="item-btn" id="item-ad" title="看15秒小广告,免费排除一个不在密码里的图标">
+          <img src="assets/icons/video.png" alt="看广告"><span class="item-cost">看广告</span>
+        </button>
+      </div>
+      <div id="keyboard"></div>
+      <p class="kbd-hint">长按/右键图标可标记:<span class="mark-demo off">排除</span> / <span class="mark-demo yes">锁定</span></p>
     </div>
-    <div id="keyboard"></div>
-    <p class="kbd-hint">长按/右键图标可标记:<span class="mark-demo off">排除</span> / <span class="mark-demo yes">锁定</span></p>
   </section>
 
   <!-- ============ 对战收件(打开链接) ============ -->

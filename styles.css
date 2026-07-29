@@ -145,6 +145,54 @@ img { image-rendering: pixelated; }
 .menu-duel { background: linear-gradient(135deg, #ffd0dc, #ffb3c8); }
 .menu-daily { background: linear-gradient(135deg, #ffe9ad, #ffdb70); }
 .menu-free { background: linear-gradient(135deg, #c9ecff, #a4ddff); }
+.menu-variant { background: linear-gradient(135deg, #e8dcff, #cbaefc); }
+
+/* 变奏挑战 NEW 角标 */
+.variant-new {
+  position: absolute; top: -10px; right: -6px;
+  background: linear-gradient(150deg, #ff8fab, #f06595);
+  color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 1px;
+  padding: 3px 10px; border-radius: 999px;
+  border: 2.5px solid var(--ink);
+  box-shadow: 0 3px 0 rgba(51, 41, 78, .85);
+  transform: rotate(6deg);
+  animation: ribbon-in .6s var(--spring-big) both;
+}
+
+/* 变奏规则翻卡 */
+.variant-flip {
+  font-size: 56px; text-align: center; margin-bottom: 6px;
+  animation: variant-flip-in .7s var(--spring-big) both;
+}
+@keyframes variant-flip-in {
+  0% { transform: rotateY(90deg) scale(.5); opacity: 0; }
+  60% { transform: rotateY(-15deg) scale(1.15); opacity: 1; }
+  100% { transform: none; opacity: 1; }
+}
+.variant-rule {
+  background: #fff3bf; border: 2px dashed #e6a817; border-radius: 12px;
+  padding: 10px 14px; font-size: 14.5px; line-height: 1.7; color: var(--ink) !important;
+}
+.variant-tip { text-align: center; font-size: 12.5px; }
+.variant-fams { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+.variant-fam {
+  display: flex; align-items: center; gap: 6px; justify-content: center;
+  font-size: 13px; font-weight: 700;
+  background: #f6f1ff; border: 2px solid var(--ink); border-radius: 999px; padding: 4px 12px;
+}
+
+/* 5 格变体:瓷砖缩小以放下一行 */
+#board.len5 .guess-row .tile { width: 44px; height: 44px; border-radius: 12px; }
+#board.len5 .row-feedback { min-width: 64px; }
+
+/* 广告道具角标(主图标=排除,角标=看视频) */
+.ad-corner {
+  position: absolute; top: -8px; right: -8px;
+  width: 22px; height: 22px; border-radius: 7px;
+  background: var(--ink); border: 2px solid var(--card);
+  display: grid; place-items: center;
+}
+.ad-corner img { width: 13px; height: 13px; filter: none !important; }
 
 /* 每日挑战完成:右上角绶带 + 倒计时 */
 .daily-ribbon {

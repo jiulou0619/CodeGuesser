@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>码上猜 CodePop · 好友猜图标对决</title>
-<meta name="description" content="码上猜,马上猜!Q弹像素风图标解码对战 —— 出题给好友,随时接招,无需服务器!">
+<meta name="description" content="码上猜，马上猜！Q弹像素风图标解码对战 —— 出题给好友，随时接招，无需服务器！">
 <link rel="icon" type="image/png" href="assets/icons/star.png">
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -14,7 +14,7 @@
 <!-- ============ 顶栏 ============ -->
 <header id="topbar">
   <button class="icon-btn" id="btn-back" title="返回" hidden><img src="assets/icons/arrow-left.png" alt="返回"></button>
-  <div id="logo" title="喵?">
+  <div id="logo" title="喵？">
     <span class="logo-en">Code<em>Pop</em></span>
     <span class="logo-cn">码上猜</span>
   </div>
@@ -30,7 +30,7 @@
   <section class="screen" id="screen-home">
     <div class="home-hero">
       <div class="hero-tiles" id="hero-tiles"></div>
-      <p class="hero-sub">码上猜,马上猜!破解好友的图标密码,步数少者称王</p>
+      <p class="hero-sub">码上猜，马上猜！破解好友的图标密码，步数少者称王</p>
     </div>
     <div class="home-menu">
       <button class="menu-btn menu-daily" id="btn-daily">
@@ -44,6 +44,12 @@
         <span class="menu-title">无尽练习</span>
         <span class="menu-desc">随机密码 · 磨炼直觉</span>
       </button>
+      <button class="menu-btn menu-variant" id="btn-variant">
+        <img src="assets/icons/puzzle.png" alt="">
+        <span class="menu-title">变奏挑战</span>
+        <span class="menu-desc">每局一条新规则 · 换个脑子猜</span>
+        <span class="variant-new">NEW</span>
+      </button>
       <button class="menu-btn menu-duel" id="btn-duel">
         <img src="assets/icons/sword.png" alt="">
         <span class="menu-title">好友对战</span>
@@ -53,15 +59,15 @@
     <div class="home-stats" id="home-stats"></div>
   </section>
 
-  <!-- ============ 出题(对战/反击) ============ -->
+  <!-- ============ 出题（对战/反击） ============ -->
   <section class="screen" id="screen-setup" hidden>
     <h2 class="screen-title" id="setup-title">布置你的图标密码</h2>
-    <p class="screen-hint">挑 4 个不重复的图标,好友要一步步猜出它们和排列顺序</p>
+    <p class="screen-hint">挑 4 个不重复的图标，好友要一步步猜出它们和排列顺序</p>
     <div class="setup-slots" id="setup-slots"></div>
     <div class="setup-keyboard" id="setup-keyboard"></div>
     <div class="setup-form">
-      <input type="text" id="setup-name" maxlength="8" placeholder="你的昵称(最多8字)">
-      <input type="text" id="setup-msg" maxlength="20" placeholder="留一句嘲讽(可选)">
+      <input type="text" id="setup-name" maxlength="8" placeholder="你的昵称（最多8字）">
+      <input type="text" id="setup-msg" maxlength="20" placeholder="留一句嘲讽（可选）">
       <button class="big-btn" id="btn-setup-random"><img src="assets/icons/dice.png" alt="">帮我随机</button>
       <button class="big-btn primary" id="btn-setup-go"><img src="assets/icons/paper-plane.png" alt="">生成挑战链接</button>
     </div>
@@ -72,7 +78,7 @@
     <div class="play-head">
       <div class="play-mode" id="play-mode"></div>
       <div class="play-counters">
-        <span class="counter" id="counter-steps" title="步数(含道具代价)"><img src="assets/icons/hit.png" alt="">0 步</span>
+        <span class="counter" id="counter-steps" title="步数（含道具代价）"><img src="assets/icons/hit.png" alt="">0 步</span>
         <span class="counter" id="counter-timer"><img src="assets/icons/clock.png" alt="">0:00</span>
         <button class="counter counter-btn" id="btn-giveup" title="认输并查看答案"><img src="assets/icons/flag.png" alt="">认输</button>
       </div>
@@ -85,22 +91,24 @@
         <span class="legend-item"><span class="fb-chip fb-pos">位置</span>其中几个连位置都对</span>
       </div>
       <div class="items-bar" id="items-bar">
-        <button class="item-btn" id="item-magnet" title="磁铁:问一个图标在不在密码里(+1步)">
+        <button class="item-btn" id="item-magnet" title="磁铁：问一个图标在不在密码里（+1步）">
           <img src="assets/icons/magnet.png" alt="磁铁"><span class="item-cost">+1步</span>
         </button>
-        <button class="item-btn" id="item-scope" title="望远镜:偷看一个位置的图标(+3步)">
+        <button class="item-btn" id="item-scope" title="望远镜：偷看一个位置的图标（+3步）">
           <img src="assets/icons/binoculars.png" alt="望远镜"><span class="item-cost">+3步</span>
         </button>
-        <button class="item-btn" id="item-ad" title="看15秒小广告,免费排除一个不在密码里的图标">
-          <img src="assets/icons/video.png" alt="看广告"><span class="item-cost">看广告</span>
+        <button class="item-btn" id="item-ad" title="看15秒小广告，免费排除一个不在密码里的图标">
+          <img src="assets/icons/prohibited.png" alt="排除">
+          <span class="ad-corner"><img src="assets/icons/video.png" alt=""></span>
+          <span class="item-cost">看广告排除1个</span>
         </button>
       </div>
       <div id="keyboard"></div>
-      <p class="kbd-hint">长按/右键图标可标记:<span class="mark-demo off">排除</span> / <span class="mark-demo yes">锁定</span></p>
+      <p class="kbd-hint">长按/右键图标可标记：<span class="mark-demo off">排除</span> / <span class="mark-demo yes">锁定</span></p>
     </div>
   </section>
 
-  <!-- ============ 对战收件(打开链接) ============ -->
+  <!-- ============ 对战收件（打开链接） ============ -->
   <section class="screen" id="screen-inbox" hidden>
     <div class="inbox-card" id="inbox-card"></div>
   </section>

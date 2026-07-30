@@ -35,16 +35,30 @@ function i18nLookup(key) {
   if (en && Object.prototype.hasOwnProperty.call(en, key)) return en[key];
   return key; // 兜底:显示简中原文
 }
+/* 单复数:词典值可为 {one, two, few, many, other},按第一个数字参数经 Intl.PluralRules 选择 */
+const PLURAL_LOCALE = { zh: 'zh', zht: 'zh-TW' };
+function pickPlural(obj, args) {
+  const n = args.find(a => typeof a === 'number' || (typeof a === 'string' && a !== '' && !isNaN(a)));
+  if (n === undefined) return obj.other || Object.values(obj)[0];
+  let cat = 'other';
+  try { cat = new Intl.PluralRules(PLURAL_LOCALE[CUR_LANG] || CUR_LANG).select(Number(n)); } catch (e) { /* ignore */ }
+  return obj[cat] || obj.other || Object.values(obj)[0];
+}
 function i18nFmt(s, args) {
   return s.replace(/%(\d+)/g, (m, n) => (args[n - 1] !== undefined ? String(args[n - 1]) : m));
 }
+function resolveEntry(key, args) {
+  let v = i18nLookup(key);
+  if (v && typeof v === 'object') v = pickPlural(v, args);
+  return i18nFmt(String(v), args);
+}
 /* 普通取词:t('原文', 参数...) —— 原文里 %1 %2 为占位符 */
-function t(key, ...args) { return i18nFmt(i18nLookup(key), args); }
+function t(key, ...args) { return resolveEntry(key, args); }
 /* 标签模板取词:T`原文 ${x} 原文` —— 插值自动映射为 %1 %2 */
 function T(strings, ...vals) {
   let key = strings[0];
   for (let i = 1; i < strings.length; i++) key += '%' + i + strings[i];
-  return i18nFmt(i18nLookup(key), vals);
+  return resolveEntry(key, vals);
 }
 
 /* 静态 DOM 翻译:遍历文本节点与常见属性,按词典替换(键=简中原文) */
@@ -76,13 +90,27 @@ function applyStaticLang() {
   }
 }
 
-/* 初始化:直接读 localStorage(先于 game.js 的常量求值) */
+/* 浏览器语言 → 支持语种(zh-TW/HK/MO → 繁中,zh* → 简中,其余按主语言子标签) */
+function detectBrowserLang(list) {
+  for (const raw of list || []) {
+    const tag = String(raw).toLowerCase();
+    if (tag.startsWith('zh')) {
+      return /-(tw|hk|mo|hant)/.test(tag) ? 'zht' : 'zh';
+    }
+    const primary = tag.split('-')[0];
+    if (LANGS.some(l => l.code === primary)) return primary;
+  }
+  return 'en';
+}
+
+/* 初始化:优先用户已保存的偏好,否则跟随浏览器语言(先于 game.js 的常量求值) */
 (function initI18n() {
-  let lang = 'en';
+  let lang = '';
   try {
     const s = JSON.parse(localStorage.getItem('codepop-v1') || '{}');
     if (s.lang) lang = s.lang;
   } catch (e) { /* ignore */ }
+  if (!lang) lang = detectBrowserLang(navigator.languages || [navigator.language]);
   setCurrentLang(lang);
   document.documentElement.lang = { zh: 'zh-CN', zht: 'zh-TW' }[CUR_LANG] || CUR_LANG;
   document.documentElement.dir = CUR_LANG === 'ar' ? 'rtl' : 'ltr';

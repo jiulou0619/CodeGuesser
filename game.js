@@ -63,7 +63,7 @@ document.addEventListener('click', e => {
 const STORE_KEY = 'codepop-v1';
 const store = Object.assign({
   sound: true,
-  lang: 'en',
+  lang: '',   // 空 = 跟随浏览器语言;用户在 🌐 里选过才落值
   name: '',
   played: 0, wins: 0, best: 0,
   duelPlayed: 0, duelWins: 0,
@@ -873,7 +873,7 @@ function starsHTML(n) {
   for (let i = 0; i < 3; i++) h += `<img src="assets/icons/star5.png" class="${i < n ? '' : 'dim'}">`;
   return `<div class="result-stars">${h}</div>`;
 }
-function stepsLabel(s) { return s >= FAIL_STEPS ? t(t("未破解")) : s + t(' 步'); }
+function stepsLabel(s) { return s >= FAIL_STEPS ? t('未破解') : t('%1 步', s); }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
 async function copyText(text, okMsg = t("已复制，快去粘贴给好友！")) {

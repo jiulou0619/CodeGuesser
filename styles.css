@@ -628,3 +628,26 @@ body[data-screen="screen-play"] #app { padding-bottom: 8px; }
   }
   .hero-tiles .tile, .card-icon, .bg-float { animation: none !important; }
 }
+
+/* ---------- 变奏:对手日 / 黏黏日 / 锁匠日 / 接龙日 ---------- */
+.fb-chain { background: #ffc9de; }
+.robot-row { background: rgba(120,150,255,.14); border-radius: 14px; }
+.robot-row .row-index { font-size: 15px; }
+.robot-thinking {
+  font-size: 11px; font-weight: 700; color: #8f84b8;
+  animation: robot-blink 1s ease-in-out 3;
+}
+@keyframes robot-blink { 50% { opacity: .3; } }
+.tile.honey-locked {
+  box-shadow: 0 0 0 3px #f4a900 inset, 0 5px 0 rgba(51,41,78,.9);
+}
+.tile.honey-locked::after {
+  content: '🍯'; position: absolute; top: -9px; right: -9px; font-size: 15px;
+  filter: drop-shadow(0 1px 0 rgba(51,41,78,.35));
+}
+.tile.tweakable { cursor: pointer; }
+.tile.tweak-sel {
+  outline: 4px solid #ff5ca8; outline-offset: 2px;
+  animation: sel-bounce .45s var(--spring-big);
+}
+@keyframes sel-bounce { 0% { transform: scale(.85); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }

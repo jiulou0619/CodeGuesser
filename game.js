@@ -152,14 +152,7 @@ function judge(secret, guess) {
   return { a, b };
 }
 
-/* ---------------- 变奏模式：每局一条公开规则，重塑解题方式 ---------------- */
-const FAMILIES = [
-  { name: t('暖糖系'), emoji: '🔥', members: [0, 1, 2] },      // 苹果 猫咪 星星
-  { name: t('冷饮系'), emoji: '🧊', members: [5, 6, 7] },      // 小鱼 钻石 月亮
-  { name: t('花园系'), emoji: '🌿', members: [3, 4, 8, 9] },   // 闪电 四叶草 花朵 爱心
-];
-const famOf = idx => FAMILIES.findIndex(f => f.members.includes(+idx));
-
+/* ---------------- 变奏模式:每局一条公开规则,重塑解题方式 ---------------- */
 const VARIANTS = [
   {
     id: 'twin', name: t('双影日'), emoji: '👯', len: 5, allowDup: true,
@@ -183,56 +176,60 @@ const VARIANTS = [
     },
   },
   {
-    id: 'family', name: t('组队日'), emoji: '🎨', len: 4, allowDup: false,
-    rule: t('今天图标按色系组队参赛:密码的 4 个图标来自恰好两个色系,每个色系各出两位选手。色系分组开局就钉在情报栏。'),
-    tip: t('先用一猜摸清是哪两个色系在场,解空间立刻塌掉一大半。'),
-    gen(rng = Math.random) {
-      const fa = (rng() * 3) | 0;
-      let fb = (rng() * 3) | 0;
-      while (fb === fa) fb = (rng() * 3) | 0;
-      const pick2 = fam => {
-        const m = [...FAMILIES[fam].members];
-        for (let i = m.length - 1; i > 0; i--) {
-          const j = (rng() * (i + 1)) | 0;
-          [m[i], m[j]] = [m[j], m[i]];
-        }
-        return m.slice(0, 2);
-      };
-      const four = [...pick2(fa), ...pick2(fb)];
-      for (let i = four.length - 1; i > 0; i--) {
-        const j = (rng() * (i + 1)) | 0;
-        [four[i], four[j]] = [four[j], four[i]];
-      }
-      return four.join('');
-    },
-  },
-  {
-    id: 'vacation', name: t('放假日'), emoji: '🏖', len: 4, allowDup: false, banCount: 3,
-    rule: t('三个图标今天集体请假,绝对不在密码里!开局直接告诉你是哪三位(键盘上已自动划掉),密码从剩下 7 个图标里选 4 个。'),
-    tip: t('白送的情报也要用好:7 选 4 的开局和 10 选 4 完全不同,别浪费任何一猜。'),
-    gen(rng = Math.random) {
-      const all = [...Array(ICONS.length).keys()];
-      for (let i = all.length - 1; i > 0; i--) {
-        const j = (rng() * (i + 1)) | 0;
-        [all[i], all[j]] = [all[j], all[i]];
-      }
-      this.banned = all.slice(0, 3);
-      return all.slice(3, 7).join('');
-    },
-  },
-  {
-    id: 'sale', name: t('大甩卖日'), emoji: '🛒', len: 4, allowDup: false, maxG: 6, freeItems: true,
-    rule: t('情报大甩卖:磁铁和望远镜今天全部免费!代价是——你只有 6 次出手机会(平时是 12 次)。'),
-    tip: t('今天拼的不是省道具,是问对问题:先买什么情报,决定你能不能 6 步内收网。'),
+    id: 'robot', name: t('对手日'), emoji: '🤖', len: 4, allowDup: false, robot: true,
+    rule: t('一个机器人在和你抢同一个密码:你猜一行,它猜一行,先猜中的赢!它的每行猜测和反馈都完全公开。'),
+    tip: t('它的情报你可以随便偷看——落后就大胆抢答,领先就稳稳收网,赢它一行的感觉好极了。'),
     gen(rng = Math.random) { return randomCode(rng); },
   },
   {
-    id: 'oath', name: t('宣言日'), emoji: '📜', len: 4, allowDup: false,
-    rule: t('侦探的高光时刻:你随时可以公开「立下宣言」,断言某个位置就是某个图标——应验立减 2 步,落空 +1 步。每局限一次。'),
-    tip: t('推理到两个假设二选一时,宣言的期望收益远高于多猜一步——敢不敢赌你的判断?'),
+    id: 'honey', name: t('黏黏日'), emoji: '🍯', len: 4, allowDup: false, maxG: 9, honey: true,
+    rule: t('猜对图标且位置也对的格子,会被蜜糖当场粘住:直接亮出正确图标,之后每一行自动帮你填好!代价是——只有 9 次机会。'),
+    tip: t('让同一个图标在不同行换位置巡逻,是钓蜜糖的妙招;每粘住一格,棋盘就小一圈。'),
+    gen(rng = Math.random) { return randomCode(rng); },
+  },
+  {
+    id: 'tweak', name: t('锁匠日'), emoji: '🗝', len: 4, allowDup: false, tweak: true,
+    rule: t('像真锁匠一样细细开锁:从第 2 猜起,每次只能在上一行基础上「换掉 1 格」,或「交换 2 格」的位置。'),
+    tip: t('每次只动一处,盯紧两颗胶囊的涨跌——那就是锁芯的咔哒声,每一下都在告诉你方向。'),
+    gen(rng = Math.random) { return randomCode(rng); },
+  },
+  {
+    id: 'chain', name: t('接龙日'), emoji: '🔗', len: 4, allowDup: false, chain: true,
+    rule: t('今天不看位置,看牵手:「相邻」告诉你——你这行紧挨着的 3 对图标里,有几对在密码里也以同样的左右顺序紧挨着。'),
+    tip: t('先用「图案」找齐 4 位成员,再交换顺序试探谁牵着谁——确认一对相邻,就同时锁死了两格的关系。'),
     gen(rng = Math.random) { return randomCode(rng); },
   },
 ];
+
+/* 接龙日:数猜测的 3 个有序相邻对里,有几对也在密码里以同序紧挨 */
+function chainPairs(secret, guess) {
+  let m = 0;
+  for (let i = 0; i < guess.length - 1; i++) {
+    for (let j = 0; j < secret.length - 1; j++) {
+      if (guess[i] === secret[j] && guess[i + 1] === secret[j + 1]) { m++; break; }
+    }
+  }
+  return m;
+}
+
+/* 对手日:机器人只看自己的历史反馈,从相容候选里确定性抽取下一猜(种子随密码固定,全局无中途随机) */
+let ALL_CODES = null;
+function allCodes() {
+  if (ALL_CODES) return ALL_CODES;
+  ALL_CODES = [];
+  for (let a = 0; a < 10; a++) for (let b = 0; b < 10; b++) for (let c = 0; c < 10; c++) for (let d = 0; d < 10; d++) {
+    if (a !== b && a !== c && a !== d && b !== c && b !== d && c !== d) ALL_CODES.push('' + a + b + c + d);
+  }
+  return ALL_CODES;
+}
+function robotNextGuess(robot) {
+  const pool = robot.candidates || allCodes();
+  return pool[(robot.rng() * pool.length) | 0];
+}
+function robotLearn(robot, code, a, b) {
+  const pool = robot.candidates || allCodes();
+  robot.candidates = pool.filter(c => { const r = judge(c, code); return r.a === a && r.b === b; });
+}
 
 /* ---------------- DOM 快捷 ---------------- */
 const $ = s => document.querySelector(s);
@@ -311,9 +308,14 @@ const game = {
   guesses: [],         // [{code, a, b}]
   input: [],
   penalty: 0,
-  items: { magnet: true, scope: true, ad: true, oath: false },
+  items: { magnet: true, scope: true, ad: true },
   marks: {},           // idx -> '' | 'off' | 'yes'
   revealed: {},        // pos -> iconIdx （望远镜）
+  locked: {},          // pos -> iconIdx （黏黏日蜜糖锁定）
+  tweakSel: -1,        // 锁匠日:当前选中的输入格
+  robot: null,         // 对手日:{ rows, candidates, rng }
+  robotWin: false,     // 对手日:机器人抢先破解
+  turnLock: false,     // 对手日:机器人回合中,禁玩家操作
   startTime: 0,
   timerId: 0,
   duelCtx: null,       // 对战上下文（收到的payload)
@@ -336,8 +338,9 @@ function startGame(mode, secret, duelCtx = null, variant = null) {
     allowDup: variant ? !!variant.allowDup : false,
     variant,
     guesses: [], input: [], penalty: 0,
-    items: { magnet: true, scope: true, ad: true, oath: variant && variant.id === 'oath' },
-    marks: {}, revealed: {},
+    items: { magnet: true, scope: true, ad: true },
+    marks: {}, revealed: {}, locked: {}, tweakSel: -1, robotWin: false, turnLock: false,
+    robot: variant && variant.robot ? { rows: [], candidates: null, rng: seededRng('robot-' + secret) } : null,
     duelCtx, startTime: Date.now(),
     dailyDate: todayStr(), dailyNum: dailyNumber(),
     seq: ++gameSeq,
@@ -356,29 +359,15 @@ function startGame(mode, secret, duelCtx = null, variant = null) {
   $('#intel-bar').hidden = true;
   $('#intel-bar').innerHTML = '';
   ['magnet', 'scope', 'ad'].forEach(k => $('#item-' + k).classList.remove('used'));
-  syncOathButton();
   buildKeyboard();
   $('#board').innerHTML = '';
   $('#board').classList.toggle('len5', game.len === 5);
   if (variant) {
     // 规则钉在情报栏，全程可见
     addIntel(`${variant.emoji} ${variant.name}:${variantChipText(variant)}`, true);
-    if (variant.id === 'family') {
-      FAMILIES.forEach(f => {
-        addIntel(`${f.emoji} ${f.name} ${f.members.map(chipIconHTML).join('')}`, true);
-      });
-    }
-    if (variant.id === 'vacation' && variant.banned) {
-      // 休假图标开局即划掉
-      variant.banned.forEach(i => { game.marks[i] = 'off'; });
-      addIntel(T`🏖 休假中:${variant.banned.map(chipIconHTML).join('')}`, false);
-      syncKeyMarks();
-    }
+    if (variant.honey) addIntel(`🍯 ${t("已粘住")} <b id="honey-count">0</b>/${game.len}`, true);
+    if (variant.robot) addIntel(`🤖 ${t("它的反馈你也能用!")}`, true);
   }
-  // 大甩卖日:道具免费,价签同步
-  const freeItems = !!(variant && variant.freeItems);
-  $('#item-magnet .item-cost').textContent = freeItems ? t('免费!') : t('+1步');
-  $('#item-scope .item-cost').textContent = freeItems ? t('免费!') : t('+3步');
   appendInputRow();
   updateCounters();
   showScreen('screen-play');
@@ -387,25 +376,12 @@ function startGame(mode, secret, duelCtx = null, variant = null) {
 function variantChipText(v) {
   return {
     twin: t('5 格 · 有一对紧挨的双影'),
-    family: t('两个色系 · 各出两位'),
-    vacation: t('三位休假,密码 7 选 4'),
-    sale: t('道具免费 · 只有 6 次机会'),
-    oath: t('可立宣言:应验 −2,落空 +1'),
+    robot: t('和机器人轮流猜 · 先破解的赢'),
+    honey: t('位置全对就粘住 · 只有 9 次机会'),
+    tweak: t('每次只能改一处:换 1 格或交换 2 格'),
+    chain: t('「位置」换成「相邻」· 拼出整条链'),
   }[v.id] || '';
 }
-function syncOathButton() {
-  let btn = $('#item-oath');
-  if (!game.items.oath) { if (btn) btn.remove(); return; }
-  if (!btn) {
-    btn = el('button', 'item-btn', `<img src="assets/icons/flag.png" alt="宣言"><span class="item-cost">${t('−2 或 +1')}</span>`);
-    btn.id = 'item-oath';
-    btn.title = t('宣言：断言某个位置是某个图标，应验 −2 步，落空 +1 步');
-    $('#items-bar').insertBefore(btn, $('#item-ad'));
-    btn.addEventListener('click', openOath);
-  }
-  btn.classList.remove('used');
-}
-
 function updateTimer() {
   if (!game.active) return;
   const s = ((Date.now() - game.startTime) / 1000) | 0;
@@ -472,39 +448,130 @@ function appendInputRow() {
   const row = el('div', 'guess-row input-row');
   row.innerHTML = `<span class="row-index">${game.guesses.length + 1}</span><div class="tiles"></div><div class="row-feedback"></div>`;
   const tiles = row.querySelector('.tiles');
-  for (let i = 0; i < game.len; i++) tiles.appendChild(el('div', 'tile empty'));
+  const v = game.variant;
+  if (v && v.tweak && game.guesses.length) {
+    // 锁匠日:预填上一行;点一格选中后可用键盘替换,点两格交换
+    game.input = [...game.guesses[game.guesses.length - 1].code].map(Number);
+    game.tweakSel = -1;
+    for (let i = 0; i < game.len; i++) {
+      const tile = el('div', 'tile filled tweakable');
+      paintTile(tile, game.input[i]);
+      tile.addEventListener('click', () => tweakTapTile(i));
+      tiles.appendChild(tile);
+    }
+  } else {
+    game.input = [];
+    for (let i = 0; i < game.len; i++) {
+      if (v && v.honey && game.locked[i] !== undefined) {
+        // 黏黏日:被蜜糖粘住的格子自动填好,不可修改
+        const tile = el('div', 'tile filled honey-locked');
+        paintTile(tile, game.locked[i]);
+        tiles.appendChild(tile);
+      } else {
+        tiles.appendChild(el('div', 'tile empty'));
+      }
+    }
+  }
   $('#board').appendChild(row);
   row.scrollIntoView({ block: 'nearest' });
 }
+function paintTile(tile, idx) {
+  const ic = ICONS[idx];
+  tile.style.background = ic.color;
+  tile.innerHTML = `<img src="${ICON_PATH(ic.id)}" alt="${ic.name}">`;
+}
 function inputRowTiles() { return document.querySelectorAll('#board .input-row .tile'); }
+function freeTiles() { return document.querySelectorAll('#board .input-row .tile:not(.honey-locked)'); }
+/* 黏黏日:锁定格 + 依次填入的自由格,拼出完整猜测 */
+function honeyCode() {
+  const out = [];
+  let p = 0;
+  for (let i = 0; i < game.len; i++) out.push(game.locked[i] !== undefined ? game.locked[i] : game.input[p++]);
+  return out.join('');
+}
 
 function inputIcon(idx) {
-  if (!game.active || game.finished) return;
+  if (!game.active || game.finished || game.turnLock) return;
   if (!inputRowTiles().length) return; // 揭示动画期间暂不接受输入
-  if (game.input.length >= game.len) return;
-  if (!game.allowDup && game.input.includes(idx)) {
-    toast('这局密码不会重复图标哦'); shakeInputRow(); return;
+  const v = game.variant;
+  if (v && v.tweak && game.guesses.length) {
+    if (game.tweakSel < 0) { toast(t('先点选要换的格子;点两个格子可以交换')); shakeInputRow(); return; }
+    if (game.input.includes(idx) && game.input[game.tweakSel] !== idx) {
+      toast(t('这局密码不会重复图标哦')); shakeInputRow(); return;
+    }
+    game.input[game.tweakSel] = idx;
+    const tile = inputRowTiles()[game.tweakSel];
+    paintTile(tile, idx);
+    tile.classList.remove('tweak-sel');
+    game.tweakSel = -1;
+    typePop();
+    return;
+  }
+  const cap = v && v.honey ? game.len - Object.keys(game.locked).length : game.len;
+  if (game.input.length >= cap) return;
+  const inRow = v && v.honey ? game.input.concat(Object.values(game.locked)) : game.input;
+  if (!game.allowDup && inRow.includes(idx)) {
+    toast(t('这局密码不会重复图标哦')); shakeInputRow(); return;
   }
   if (game.allowDup && game.input.filter(i => i === idx).length >= 2) {
-    toast('同一图标最多摆两个'); shakeInputRow(); return;
+    toast(t('同一图标最多摆两个')); shakeInputRow(); return;
   }
   game.input.push(idx);
-  const t = inputRowTiles()[game.input.length - 1];
-  const ic = ICONS[idx];
-  t.className = 'tile filled';
-  t.style.background = ic.color;
-  t.innerHTML = `<img src="${ICON_PATH(ic.id)}" alt="${ic.name}">`;
+  const tile = (v && v.honey ? freeTiles() : inputRowTiles())[game.input.length - 1];
+  tile.className = 'tile filled';
+  paintTile(tile, idx);
   typePop();
 }
 function inputDelete() {
-  if (!game.active || game.finished || !game.input.length) return;
+  if (!game.active || game.finished || game.turnLock) return;
   if (!inputRowTiles().length) return;
-  const t = inputRowTiles()[game.input.length - 1];
+  const v = game.variant;
+  if (v && v.tweak && game.guesses.length) {
+    // 锁匠日:橡皮擦 = 撤销全部改动,恢复成上一行
+    game.input = [...game.guesses[game.guesses.length - 1].code].map(Number);
+    game.tweakSel = -1;
+    inputRowTiles().forEach((tile, i) => { tile.className = 'tile filled tweakable'; paintTile(tile, game.input[i]); });
+    sfx('ui', 0.3);
+    return;
+  }
+  if (!game.input.length) return;
+  const tiles = v && v.honey ? freeTiles() : inputRowTiles();
+  const tile = tiles[game.input.length - 1];
   game.input.pop();
-  t.className = 'tile empty';
-  t.style.background = '';
-  t.innerHTML = '';
+  tile.className = 'tile empty';
+  tile.style.background = '';
+  tile.innerHTML = '';
   sfx('ui', 0.3);
+}
+/* 锁匠日:点格子——单击选中,再点另一格交换,再点自己取消 */
+function tweakTapTile(i) {
+  if (!game.active || game.finished || game.pendingEnd || game.turnLock) return;
+  const tiles = inputRowTiles();
+  if (!tiles.length) return;
+  if (game.tweakSel === i) {
+    tiles[i].classList.remove('tweak-sel');
+    game.tweakSel = -1;
+  } else if (game.tweakSel < 0) {
+    game.tweakSel = i;
+    tiles[i].classList.add('tweak-sel');
+    sfx('ui', 0.35);
+  } else {
+    const j = game.tweakSel;
+    [game.input[i], game.input[j]] = [game.input[j], game.input[i]];
+    paintTile(tiles[i], game.input[i]);
+    paintTile(tiles[j], game.input[j]);
+    tiles[j].classList.remove('tweak-sel');
+    game.tweakSel = -1;
+    typePop();
+  }
+}
+/* 锁匠日:与上一行相比,恰好换掉 1 格,或恰好交换 2 格 */
+function tweakDiffOk(prev, cur) {
+  const d = [];
+  for (let i = 0; i < cur.length; i++) if (prev[i] !== cur[i]) d.push(i);
+  if (d.length === 1) return true;
+  if (d.length === 2) return prev[d[0]] === cur[d[1]] && prev[d[1]] === cur[d[0]];
+  return false;
 }
 function shakeInputRow() {
   inputRowTiles().forEach(t => {
@@ -514,19 +581,40 @@ function shakeInputRow() {
 
 /* ---------------- 提交 ---------------- */
 function submitGuess() {
-  if (!game.active || game.finished || game.pendingEnd) return;
-  if (game.input.length < game.len) {
-    toast(T`先摆满 ${game.len} 个图标`); shakeInputRow(); sfx('ui', 0.4); return;
+  if (!game.active || game.finished || game.pendingEnd || game.turnLock) return;
+  const v = game.variant;
+  const isTweak = v && v.tweak && game.guesses.length > 0;
+  let code;
+  if (isTweak) {
+    code = game.input.join('');
+    const prev = game.guesses[game.guesses.length - 1].code;
+    if (code === prev) {
+      toast(t('先改一处再提交:换掉 1 格,或点两个格子交换')); shakeInputRow(); sfx('ui', 0.4); return;
+    }
+    if (!tweakDiffOk(prev, code)) {
+      toast(t('一次只能改一处!用橡皮擦可以恢复原样')); shakeInputRow(); sfx('ui', 0.45); return;
+    }
+  } else if (v && v.honey) {
+    if (game.input.length < game.len - Object.keys(game.locked).length) {
+      toast(T`先摆满 ${game.len} 个图标`); shakeInputRow(); sfx('ui', 0.4); return;
+    }
+    code = honeyCode();
+  } else {
+    if (game.input.length < game.len) {
+      toast(T`先摆满 ${game.len} 个图标`); shakeInputRow(); sfx('ui', 0.4); return;
+    }
+    code = game.input.join('');
   }
-  const code = game.input.join('');
   if (game.guesses.some(g => g.code === code)) {
-    toast('一模一样的组合已经猜过啦，再想想！');
+    toast(t('一模一样的组合已经猜过啦，再想想！'));
     shakeInputRow(); sfx('ui', 0.45);
     return; // 不消耗步数，保留当前输入让玩家修改
   }
   const { a, b } = judge(game.secret, code);
+  const chain = v && v.chain ? chainPairs(game.secret, code) : -1;
   game.guesses.push({ code, a, b });
   game.input = [];
+  game.tweakSel = -1;
   if (a === game.len || game.guesses.length >= maxGuesses()) game.pendingEnd = true; // 终局锁：揭示动画期间禁用道具/提交
 
   // 每日挑战：第一次猜测先记一笔「未破解」，防止中途刷新重开刷步数（正常完成会覆盖）
@@ -543,7 +631,7 @@ function submitGuess() {
   });
   const fb = row.querySelector('.row-feedback');
   setTimeout(() => {
-    fb.innerHTML = feedbackHTML(a, b);
+    fb.innerHTML = feedbackHTML(a, b, chain);
     if (a === game.len) { /* 胜利音效在 finish 里 */ }
     else if (a > 0) sfx('right', 0.55);
     else if (b > 0) sfx('right2', 0.5);
@@ -561,17 +649,83 @@ function submitGuess() {
     }
     if (game.variant && game.variant.maxG) {
       const left = maxGuesses() - game.guesses.length;
-      if (left === 2) toast('注意:只剩 2 次机会了!');
+      if (left === 2) toast(t('注意:只剩 2 次机会了!'));
     }
+    if (v && v.honey) applyHoneyLocks(code, row);
+    if (v && v.robot) return robotTurn();
     appendInputRow();
   }, game.len * 130 + 350);
 }
+/* 黏黏日:位置全对的格子当场锁定,之后每行自动填好 */
+function applyHoneyLocks(code, row) {
+  let newLock = false;
+  const tiles = row.querySelectorAll('.tile');
+  for (let i = 0; i < game.len; i++) {
+    if (code[i] === game.secret[i] && game.locked[i] === undefined) {
+      game.locked[i] = +code[i];
+      game.marks[+code[i]] = 'yes';
+      tiles[i].classList.add('honey-locked');
+      newLock = true;
+    }
+  }
+  if (newLock) {
+    syncKeyMarks();
+    sfx('ability', 0.5);
+    toast(T`🍯 粘住了!已锁定 ${Object.keys(game.locked).length}/${game.len} 格`);
+  }
+  const hc = $('#honey-count');
+  if (hc) hc.textContent = Object.keys(game.locked).length;
+}
+/* 对手日:机器人回合——从与它历史反馈相容的候选里抽一手,公开摆上棋盘 */
+function robotTurn() {
+  game.turnLock = true;
+  const seqAtStart = game.seq;
+  const rb = game.robot;
+  const code = robotNextGuess(rb);
+  const { a, b } = judge(game.secret, code);
+  const row = el('div', 'guess-row robot-row');
+  row.innerHTML = `<span class="row-index">🤖</span><div class="tiles"></div><div class="row-feedback"><span class="robot-thinking">${t('思考中…')}</span></div>`;
+  const tiles = row.querySelector('.tiles');
+  for (let i = 0; i < game.len; i++) tiles.appendChild(el('div', 'tile empty'));
+  $('#board').appendChild(row);
+  row.scrollIntoView({ block: 'nearest' });
+  setTimeout(() => {
+    if (!game.active || game.finished || game.seq !== seqAtStart) return;
+    const ts = row.querySelectorAll('.tile');
+    [...code].forEach((c, i) => {
+      setTimeout(() => {
+        ts[i].className = 'tile filled reveal';
+        paintTile(ts[i], +c);
+        typePop();
+      }, i * 130);
+    });
+    setTimeout(() => {
+      if (!game.active || game.finished || game.seq !== seqAtStart) return;
+      row.querySelector('.row-feedback').innerHTML = feedbackHTML(a, b, -1);
+      rb.rows.push({ code, a, b });
+      robotLearn(rb, code, a, b);
+      if (a === game.len) {
+        game.robotWin = true;
+        game.pendingEnd = true;
+        sfx('completed', 0.5);
+        setTimeout(() => finishGame(false), 600);
+        return;
+      }
+      game.turnLock = false;
+      appendInputRow();
+    }, game.len * 130 + 200);
+  }, 700);
+}
 /* 反馈：两个带标签的计数胶囊——「图案」猜对的图标数（含位置对的）、「位置」其中位置也对的数。
-   不用与格子对齐的点阵，避免玩家误以为点的位置对应哪一格 */
-function feedbackHTML(a, b) {
+   不用与格子对齐的点阵，避免玩家误以为点的位置对应哪一格。
+   接龙日把「位置」换成「相邻」——同序紧挨的相邻对数 */
+function feedbackHTML(a, b, chain = -1) {
   const icons = a + b, pos = a;
-  return `<span class="fb-chip fb-icons${icons ? '' : ' zero'}">${t('图案')}<b>${icons}</b></span>` +
-         `<span class="fb-chip fb-pos${pos ? '' : ' zero'}" style="animation-delay:.1s">${t('位置')}<b>${pos}</b></span>`;
+  const first = `<span class="fb-chip fb-icons${icons ? '' : ' zero'}">${t('图案')}<b>${icons}</b></span>`;
+  if (chain >= 0) {
+    return first + `<span class="fb-chip fb-chain${chain ? '' : ' zero'}" style="animation-delay:.1s">${t('相邻')}<b>${chain}</b></span>`;
+  }
+  return first + `<span class="fb-chip fb-pos${pos ? '' : ' zero'}" style="animation-delay:.1s">${t('位置')}<b>${pos}</b></span>`;
 }
 
 /* ---------------- 道具 ---------------- */
@@ -581,15 +735,14 @@ function addIntel(html, good) {
   bar.appendChild(el('span', 'intel-chip ' + (good ? 'good' : 'bad'), html));
 }
 $('#item-magnet').addEventListener('click', () => {
-  if (!game.active || game.finished || game.pendingEnd || !game.items.magnet) return;
+  if (!game.active || game.finished || game.pendingEnd || game.turnLock || !game.items.magnet) return;
   let grid = '';
-  const itemFree = !!(game.variant && game.variant.freeItems);
   ICONS.forEach((ic, idx) => {
     grid += `<button class="key" data-pick="${idx}" style="background:${ic.color}"><span class="key-num">${idx}</span><img src="${ICON_PATH(ic.id)}"></button>`;
   });
   const box = openModal(`
     <h3>${t('🧲 磁铁探测')}</h3>
-    <p>${t("选一个图标，磁铁会告诉你它<b>在不在</b>密码里")}${itemFree ? t("（代价：免费！）") : t("（代价：+1 步）")}</p>
+    <p>${t("选一个图标，磁铁会告诉你它<b>在不在</b>密码里")}${t("（代价：+1 步）")}</p>
     <div class="pick-grid">${grid}</div>
     <div class="modal-actions"><button class="big-btn" id="m-cancel">${t('先不用')}</button></div>`);
   box.querySelector('#m-cancel').addEventListener('click', closeModal);
@@ -597,7 +750,7 @@ $('#item-magnet').addEventListener('click', () => {
     const idx = +btn.dataset.pick;
     const inCode = game.secret.includes(String(idx));
     game.items.magnet = false;
-    game.penalty += itemFree ? 0 : 1;
+    game.penalty += 1;
     $('#item-magnet').classList.add('used');
     game.marks[idx] = inCode ? 'yes' : 'off';
     syncKeyMarks();
@@ -609,15 +762,14 @@ $('#item-magnet').addEventListener('click', () => {
   }));
 });
 $('#item-scope').addEventListener('click', () => {
-  if (!game.active || game.finished || game.pendingEnd || !game.items.scope) return;
+  if (!game.active || game.finished || game.pendingEnd || game.turnLock || !game.items.scope) return;
   let picks = '';
-  const scopeFree = !!(game.variant && game.variant.freeItems);
   for (let i = 0; i < game.len; i++) {
     picks += `<div class="tile" data-pos="${i}">${i + 1}</div>`;
   }
   const box = openModal(`
     <h3>${t('🔭 望远镜偷看')}</h3>
-    <p>${t("选一个位置，直接看到那里的图标")}${scopeFree ? t("（代价：免费！）") : t("（代价：+3 步，慎用！）")}</p>
+    <p>${t("选一个位置，直接看到那里的图标")}${t("（代价：+3 步，慎用！）")}</p>
     <div class="pos-pick">${picks}</div>
     <div class="modal-actions"><button class="big-btn" id="m-cancel">${t('先不用')}</button></div>`);
   box.querySelector('#m-cancel').addEventListener('click', closeModal);
@@ -625,7 +777,7 @@ $('#item-scope').addEventListener('click', () => {
     const pos = +t.dataset.pos;
     const idx = +game.secret[pos];
     game.items.scope = false;
-    game.penalty += scopeFree ? 0 : 3;
+    game.penalty += 3;
     $('#item-scope').classList.add('used');
     game.revealed[pos] = idx;
     game.marks[idx] = 'yes';
@@ -641,7 +793,7 @@ $('#item-scope').addEventListener('click', () => {
 /* ---------------- 假广告：看 15 秒，3 秒后可跳过（跳过没奖励） ---------------- */
 let adTimerId = 0;
 $('#item-ad').addEventListener('click', () => {
-  if (!game.active || game.finished || game.pendingEnd || !game.items.ad) return;
+  if (!game.active || game.finished || game.pendingEnd || game.turnLock || !game.items.ad) return;
   const candidates = ICONS.map((_, i) => i)
     .filter(i => !game.secret.includes(String(i)) && game.marks[i] !== 'off');
   if (!candidates.length) { toast(t("没有可排除的图标啦，广告小猫也帮不上忙"), ICON_PATH('video')); return; }
@@ -687,59 +839,6 @@ $('#item-ad').addEventListener('click', () => {
     if (left <= 0) closeAd(true);
   }, 1000);
 });
-
-/* ---------------- 宣言（宣言日变体）:断言某位置是某图标，应验 −2 步，落空 +1 步 ---------------- */
-function openOath() {
-  if (!game.active || game.finished || game.pendingEnd || !game.items.oath) return;
-  let posPick = '';
-  for (let i = 0; i < game.len; i++) posPick += `<div class="tile pos-sel" data-pos="${i}">${i + 1}</div>`;
-  let iconGrid = '';
-  ICONS.forEach((ic, idx) => {
-    iconGrid += `<button class="key" data-oath="${idx}" style="background:${ic.color}"><span class="key-num">${idx}</span><img src="${ICON_PATH(ic.id)}"></button>`;
-  });
-  const box = openModal(`
-    <h3>${t('📜 立下宣言')}</h3>
-    <p>${t('先选')}<b>${t('位置')}</b>${t('，再选')}<b>${t('图标')}</b>${t('。应验立减 2 步，落空 +1 步——只有一次机会！')}</p>
-    <div class="pos-pick" id="oath-pos">${posPick}</div>
-    <div class="pick-grid" id="oath-icons" style="opacity:.35;pointer-events:none">${iconGrid}</div>
-    <div class="modal-actions"><button class="big-btn" id="m-cancel">${t('再想想')}</button></div>`);
-  let pos = -1;
-  box.querySelector('#m-cancel').addEventListener('click', closeModal);
-  box.querySelectorAll('[data-pos]').forEach(t => t.addEventListener('click', () => {
-    pos = +t.dataset.pos;
-    box.querySelectorAll('[data-pos]').forEach(x => x.style.outline = '');
-    t.style.outline = '4px solid var(--green)';
-    const grid = box.querySelector('#oath-icons');
-    grid.style.opacity = '1';
-    grid.style.pointerEvents = 'auto';
-    sfx('ui', 0.4);
-  }));
-  box.querySelectorAll('[data-oath]').forEach(btn => btn.addEventListener('click', () => {
-    if (pos < 0) return;
-    const idx = +btn.dataset.oath;
-    game.items.oath = false;
-    const hit = +game.secret[pos] === idx;
-    closeModal();
-    const oathBtn = $('#item-oath');
-    if (oathBtn) oathBtn.classList.add('used');
-    if (hit) {
-      game.penalty -= 2;
-      game.marks[idx] = 'yes';
-      game.revealed[pos] = idx;
-      addIntel(T`📜 宣言应验！第${pos + 1}位 = ${chipIconHTML(idx)}(−2 步）`, true);
-      confetti(40);
-      sfx('win', 0.5);
-      toast(T`神预言！第 ${pos + 1} 位就是 ${ICONS[idx].name}，步数 −2`, ICON_PATH('flag'));
-    } else {
-      game.penalty += 1;
-      addIntel(T`📜 宣言落空：第${pos + 1}位不是${chipIconHTML(idx)}(+1 步）`, false);
-      sfx('completed', 0.45);
-      toast(T`宣言落空…第 ${pos + 1} 位不是 ${ICONS[idx].name},+1 步`, ICON_PATH('flag'));
-    }
-    syncKeyMarks();
-    updateCounters(true);
-  }));
-}
 
 /* ---------------- 每日挑战：看广告复活（+3 次机会，步数 −2，限一次） ---------------- */
 function offerRevive() {
@@ -903,11 +1002,11 @@ function renderResult({ win, steps, timeSec, surrendered }) {
 
   if (game.mode === 'daily' || game.mode === 'free' || game.mode === 'variant') {
     const v = game.variant;
-    const title = win ? [t("密码破解！"), t("全部猜中！"), t("解码天才！")][(Math.random() * 3) | 0] : (surrendered ? t("下次再战") : t("密码逃走了…"));
+    const title = game.robotWin ? t("被机器人抢先了!") : win ? [t("密码破解！"), t("全部猜中！"), t("解码天才！")][(Math.random() * 3) | 0] : (surrendered ? t("下次再战") : t("密码逃走了…"));
     const shareText = game.mode === 'daily'
       ? T`码上猜 CodePop 每日挑战 #${game.dailyNum}\n${win ? T`${steps} 步破解 ${'⭐'.repeat(starCount(steps))}` : t("未能破解 💦")}\n${shareGrid(grid)}\n${baseUrl()}`
       : game.mode === 'variant'
-        ? T`码上猜 · 变奏挑战【${v.emoji}${v.name}】\n${win ? T`${steps} 步破解！` : t("把我难住了 💦")}\n${shareGrid(grid, game.len)}\n你也来试试：${baseUrl()}`
+        ? T`码上猜 · 变奏挑战【${v.emoji}${v.name}】\n${win ? T`${steps} 步破解！` : game.robotWin ? t("被机器人抢先破解了 🤖") : t("把我难住了 💦")}\n${shareGrid(grid, game.len)}\n你也来试试：${baseUrl()}`
         : (win
           ? T`我在「码上猜」用 ${steps} 步破解了随机密码！\n${shareGrid(grid)}\n你也来试试：${baseUrl()}`
           : T`随机密码把我难住了 💦 你来试试？\n${shareGrid(grid)}\n${baseUrl()}`);
@@ -916,6 +1015,7 @@ function renderResult({ win, steps, timeSec, surrendered }) {
       <div class="card-title">${title}</div>
       ${win && game.mode !== 'variant' ? starsHTML(starCount(steps)) : ''}
       ${game.mode === 'variant' ? `<div class="card-sub">${v.emoji} ${v.name} · ${win ? t("%1 步", steps) : t("未破解")}</div>` : ''}
+      ${game.mode === 'variant' && game.robot ? `<div class="card-sub">${win ? t("🤖 你抢先了!机器人只猜到第 %1 行", game.robot.rows.length) : game.robotWin ? t("🤖 机器人第 %1 行就破解了", game.robot.rows.length) : t("🤖 机器人也没能破解")}</div>` : ''}
       <div class="card-sub">${win ? t("%1 步 · 用时 %2", steps, timeStr) : t("答案是——")}</div>
       ${answerStripHTML(game.secret)}
       ${game.mode === 'daily' ? `<div class="card-sub">${t("🔥 连胜 %1 天（最高 %2）", store.streak, store.maxStreak)}</div>` : ''}
@@ -1289,8 +1389,6 @@ function openVariantIntro(forced = null) {
     <h3>${v.name}</h3>
     <p class="variant-rule">${v.rule}</p>
     <p class="variant-tip">💡 ${v.tip}</p>
-    ${v.id === 'family' ? `<div class="variant-fams">${FAMILIES.map(f =>
-      `<div class="variant-fam">${f.emoji} ${f.name}${f.members.map(chipIconHTML).join('')}</div>`).join('')}</div>` : ''}
     <div class="modal-actions"><button class="big-btn primary" id="v-go">${t("开猜！")}</button></div>
     <div class="modal-actions"><button class="big-btn" id="v-other">${t("🎲 换一条规则")}</button></div>`);
   sfx('ability', 0.45);

@@ -6,16 +6,16 @@
 
 /* ---------------- 常量 ---------------- */
 const ICONS = [
-  { id: 'apple',     name: '苹果',   emoji: '🍎', color: '#ff5a5f' },
-  { id: 'cat',       name: '猫咪',   emoji: '🐱', color: '#ff922b' },
-  { id: 'star',      name: '星星',   emoji: '⭐', color: '#f5b301' },
-  { id: 'lightning', name: '闪电',   emoji: '⚡', color: '#9ec918' },
-  { id: 'clover',    name: '四叶草', emoji: '🍀', color: '#40c057' },
-  { id: 'fish',      name: '小鱼',   emoji: '🐟', color: '#22b8cf' },
-  { id: 'diamond',   name: '钻石',   emoji: '💎', color: '#4dabf7' },
-  { id: 'night',     name: '月亮',   emoji: '🌙', color: '#5c7cfa' },
-  { id: 'flower',    name: '花朵',   emoji: '🌸', color: '#9775fa' },
-  { id: 'heart',     name: '爱心',   emoji: '❤️', color: '#f06595' },
+  { id: 'apple',     name: t('苹果'),   emoji: '🍎', color: '#ff5a5f' },
+  { id: 'cat',       name: t('猫咪'),   emoji: '🐱', color: '#ff922b' },
+  { id: 'star',      name: t('星星'),   emoji: '⭐', color: '#f5b301' },
+  { id: 'lightning', name: t('闪电'),   emoji: '⚡', color: '#9ec918' },
+  { id: 'clover',    name: t('四叶草'), emoji: '🍀', color: '#40c057' },
+  { id: 'fish',      name: t('小鱼'),   emoji: '🐟', color: '#22b8cf' },
+  { id: 'diamond',   name: t('钻石'),   emoji: '💎', color: '#4dabf7' },
+  { id: 'night',     name: t('月亮'),   emoji: '🌙', color: '#5c7cfa' },
+  { id: 'flower',    name: t('花朵'),   emoji: '🌸', color: '#9775fa' },
+  { id: 'heart',     name: t('爱心'),   emoji: '❤️', color: '#f06595' },
 ];
 const CODE_LEN = 4;
 const MAX_GUESSES = 12;
@@ -63,6 +63,7 @@ document.addEventListener('click', e => {
 const STORE_KEY = 'codepop-v1';
 const store = Object.assign({
   sound: true,
+  lang: 'en',
   name: '',
   played: 0, wins: 0, best: 0,
   duelPlayed: 0, duelWins: 0,
@@ -153,17 +154,17 @@ function judge(secret, guess) {
 
 /* ---------------- 变奏模式：每局一条公开规则，重塑解题方式 ---------------- */
 const FAMILIES = [
-  { name: '暖糖系', emoji: '🔥', members: [0, 1, 2] },      // 苹果 猫咪 星星
-  { name: '冷饮系', emoji: '🧊', members: [5, 6, 7] },      // 小鱼 钻石 月亮
-  { name: '花园系', emoji: '🌿', members: [3, 4, 8, 9] },   // 闪电 四叶草 花朵 爱心
+  { name: t('暖糖系'), emoji: '🔥', members: [0, 1, 2] },      // 苹果 猫咪 星星
+  { name: t('冷饮系'), emoji: '🧊', members: [5, 6, 7] },      // 小鱼 钻石 月亮
+  { name: t('花园系'), emoji: '🌿', members: [3, 4, 8, 9] },   // 闪电 四叶草 花朵 爱心
 ];
 const famOf = idx => FAMILIES.findIndex(f => f.members.includes(+idx));
 
 const VARIANTS = [
   {
-    id: 'twin', name: '双影日', emoji: '👯', len: 5, allowDup: true,
-    rule: '有一对双胞胎图标混进了密码!5 个格子里,恰好有一个图标出现两次,而且双胞胎永远手拉手紧挨着;其余 3 个图标互不相同。',
-    tip: '老开局今天会失灵——故意摆一对相同图标去"钓"双胞胎,才是今天的妙手。',
+    id: 'twin', name: t('双影日'), emoji: '👯', len: 5, allowDup: true,
+    rule: t('有一对双胞胎图标混进了密码!5 个格子里,恰好有一个图标出现两次,而且双胞胎永远手拉手紧挨着;其余 3 个图标互不相同。'),
+    tip: t('老开局今天会失灵——故意摆一对相同图标去"钓"双胞胎,才是今天的妙手。'),
     gen(rng = Math.random) {
       const twin = (rng() * ICONS.length) | 0;
       const pairPos = (rng() * 4) | 0; // 双影占据 pairPos 和 pairPos+1
@@ -182,9 +183,9 @@ const VARIANTS = [
     },
   },
   {
-    id: 'family', name: '组队日', emoji: '🎨', len: 4, allowDup: false,
-    rule: '今天图标按色系组队参赛:密码的 4 个图标来自恰好两个色系,每个色系各出两位选手。色系分组开局就钉在情报栏。',
-    tip: '先用一猜摸清是哪两个色系在场,解空间立刻塌掉一大半。',
+    id: 'family', name: t('组队日'), emoji: '🎨', len: 4, allowDup: false,
+    rule: t('今天图标按色系组队参赛:密码的 4 个图标来自恰好两个色系,每个色系各出两位选手。色系分组开局就钉在情报栏。'),
+    tip: t('先用一猜摸清是哪两个色系在场,解空间立刻塌掉一大半。'),
     gen(rng = Math.random) {
       const fa = (rng() * 3) | 0;
       let fb = (rng() * 3) | 0;
@@ -206,9 +207,9 @@ const VARIANTS = [
     },
   },
   {
-    id: 'vacation', name: '放假日', emoji: '🏖', len: 4, allowDup: false, banCount: 3,
-    rule: '三个图标今天集体请假,绝对不在密码里!开局直接告诉你是哪三位(键盘上已自动划掉),密码从剩下 7 个图标里选 4 个。',
-    tip: '白送的情报也要用好:7 选 4 的开局和 10 选 4 完全不同,别浪费任何一猜。',
+    id: 'vacation', name: t('放假日'), emoji: '🏖', len: 4, allowDup: false, banCount: 3,
+    rule: t('三个图标今天集体请假,绝对不在密码里!开局直接告诉你是哪三位(键盘上已自动划掉),密码从剩下 7 个图标里选 4 个。'),
+    tip: t('白送的情报也要用好:7 选 4 的开局和 10 选 4 完全不同,别浪费任何一猜。'),
     gen(rng = Math.random) {
       const all = [...Array(ICONS.length).keys()];
       for (let i = all.length - 1; i > 0; i--) {
@@ -220,15 +221,15 @@ const VARIANTS = [
     },
   },
   {
-    id: 'sale', name: '大甩卖日', emoji: '🛒', len: 4, allowDup: false, maxG: 6, freeItems: true,
-    rule: '情报大甩卖:磁铁和望远镜今天全部免费!代价是——你只有 6 次出手机会(平时是 12 次)。',
-    tip: '今天拼的不是省道具,是问对问题:先买什么情报,决定你能不能 6 步内收网。',
+    id: 'sale', name: t('大甩卖日'), emoji: '🛒', len: 4, allowDup: false, maxG: 6, freeItems: true,
+    rule: t('情报大甩卖:磁铁和望远镜今天全部免费!代价是——你只有 6 次出手机会(平时是 12 次)。'),
+    tip: t('今天拼的不是省道具,是问对问题:先买什么情报,决定你能不能 6 步内收网。'),
     gen(rng = Math.random) { return randomCode(rng); },
   },
   {
-    id: 'oath', name: '宣言日', emoji: '📜', len: 4, allowDup: false,
-    rule: '侦探的高光时刻:你随时可以公开「立下宣言」,断言某个位置就是某个图标——应验立减 2 步,落空 +1 步。每局限一次。',
-    tip: '推理到两个假设二选一时,宣言的期望收益远高于多猜一步——敢不敢赌你的判断?',
+    id: 'oath', name: t('宣言日'), emoji: '📜', len: 4, allowDup: false,
+    rule: t('侦探的高光时刻:你随时可以公开「立下宣言」,断言某个位置就是某个图标——应验立减 2 步,落空 +1 步。每局限一次。'),
+    tip: t('推理到两个假设二选一时,宣言的期望收益远高于多猜一步——敢不敢赌你的判断?'),
     gen(rng = Math.random) { return randomCode(rng); },
   },
 ];
@@ -345,11 +346,11 @@ function startGame(mode, secret, duelCtx = null, variant = null) {
   game.timerId = setInterval(updateTimer, 500);
 
   const modeLabel = {
-    free: '<img src="assets/icons/dice.png">无尽练习',
-    daily: `<img src="assets/icons/sun.png">每日挑战 #${game.dailyNum}`,
-    variant: variant ? `${variant.emoji} 变奏 · ${variant.name}` : '变奏',
-    duel1: `<img src="assets/icons/sword.png">破解 ${esc(duelCtx?.n || '好友')} 的密码`,
-    duel2: `<img src="assets/icons/shield.png">迎战 ${esc(duelCtx?.bn || '好友')} 的反击`,
+    free: '<img src="assets/icons/dice.png">' + t('无尽练习'),
+    daily: `<img src="assets/icons/sun.png">${t("每日挑战")} #${game.dailyNum}`,
+    variant: variant ? T`${variant.emoji} 变奏 · ${variant.name}` : t(t("变奏")),
+    duel1: `<img src="assets/icons/sword.png">${t("破解 %1 的密码", esc(duelCtx?.n || t("好友")))}`,
+    duel2: `<img src="assets/icons/shield.png">${t("迎战 %1 的反击", esc(duelCtx?.bn || t("好友")))}`,
   }[mode];
   $('#play-mode').innerHTML = modeLabel;
   $('#intel-bar').hidden = true;
@@ -370,14 +371,14 @@ function startGame(mode, secret, duelCtx = null, variant = null) {
     if (variant.id === 'vacation' && variant.banned) {
       // 休假图标开局即划掉
       variant.banned.forEach(i => { game.marks[i] = 'off'; });
-      addIntel(`🏖 休假中:${variant.banned.map(chipIconHTML).join('')}`, false);
+      addIntel(T`🏖 休假中:${variant.banned.map(chipIconHTML).join('')}`, false);
       syncKeyMarks();
     }
   }
   // 大甩卖日:道具免费,价签同步
   const freeItems = !!(variant && variant.freeItems);
-  $('#item-magnet .item-cost').textContent = freeItems ? '免费!' : '+1步';
-  $('#item-scope .item-cost').textContent = freeItems ? '免费!' : '+3步';
+  $('#item-magnet .item-cost').textContent = freeItems ? t('免费!') : t('+1步');
+  $('#item-scope .item-cost').textContent = freeItems ? t('免费!') : t('+3步');
   appendInputRow();
   updateCounters();
   showScreen('screen-play');
@@ -385,20 +386,20 @@ function startGame(mode, secret, duelCtx = null, variant = null) {
 }
 function variantChipText(v) {
   return {
-    twin: '5 格 · 有一对紧挨的双影',
-    family: '两个色系 · 各出两位',
-    vacation: '三位休假,密码 7 选 4',
-    sale: '道具免费 · 只有 6 次机会',
-    oath: '可立宣言:应验 −2,落空 +1',
+    twin: t('5 格 · 有一对紧挨的双影'),
+    family: t('两个色系 · 各出两位'),
+    vacation: t('三位休假,密码 7 选 4'),
+    sale: t('道具免费 · 只有 6 次机会'),
+    oath: t('可立宣言:应验 −2,落空 +1'),
   }[v.id] || '';
 }
 function syncOathButton() {
   let btn = $('#item-oath');
   if (!game.items.oath) { if (btn) btn.remove(); return; }
   if (!btn) {
-    btn = el('button', 'item-btn', `<img src="assets/icons/flag.png" alt="宣言"><span class="item-cost">−2 或 +1</span>`);
+    btn = el('button', 'item-btn', `<img src="assets/icons/flag.png" alt="宣言"><span class="item-cost">${t('−2 或 +1')}</span>`);
     btn.id = 'item-oath';
-    btn.title = '宣言：断言某个位置是某个图标，应验 −2 步，落空 +1 步';
+    btn.title = t('宣言：断言某个位置是某个图标，应验 −2 步，落空 +1 步');
     $('#items-bar').insertBefore(btn, $('#item-ad'));
     btn.addEventListener('click', openOath);
   }
@@ -412,7 +413,7 @@ function updateTimer() {
 }
 function updateCounters(bump = false) {
   const c = $('#counter-steps');
-  c.innerHTML = `<img src="assets/icons/hit.png">${stepCount()} 步`;
+  c.innerHTML = `<img src="assets/icons/hit.png">${t("%1 步", stepCount())}`;
   if (bump) { c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); }
 }
 
@@ -431,7 +432,7 @@ function buildKeyboard() {
   const del = el('button', 'key key-wide', `<img src="assets/icons/eraser.png" alt="删除">`);
   del.addEventListener('click', () => { inputDelete(); });
   kb.appendChild(del);
-  const enter = el('button', 'key key-enter', `<img src="assets/icons/tick.png" alt=""><span>猜！</span>`);
+  const enter = el('button', 'key key-enter', `<img src="assets/icons/tick.png" alt=""><span>${t('猜！')}</span>`);
   enter.addEventListener('click', submitGuess);
   kb.appendChild(enter);
   syncKeyMarks();
@@ -515,7 +516,7 @@ function shakeInputRow() {
 function submitGuess() {
   if (!game.active || game.finished || game.pendingEnd) return;
   if (game.input.length < game.len) {
-    toast(`先摆满 ${game.len} 个图标`); shakeInputRow(); sfx('ui', 0.4); return;
+    toast(T`先摆满 ${game.len} 个图标`); shakeInputRow(); sfx('ui', 0.4); return;
   }
   const code = game.input.join('');
   if (game.guesses.some(g => g.code === code)) {
@@ -569,8 +570,8 @@ function submitGuess() {
    不用与格子对齐的点阵，避免玩家误以为点的位置对应哪一格 */
 function feedbackHTML(a, b) {
   const icons = a + b, pos = a;
-  return `<span class="fb-chip fb-icons${icons ? '' : ' zero'}">图案 <b>${icons}</b></span>` +
-         `<span class="fb-chip fb-pos${pos ? '' : ' zero'}" style="animation-delay:.1s">位置 <b>${pos}</b></span>`;
+  return `<span class="fb-chip fb-icons${icons ? '' : ' zero'}">${t('图案')}<b>${icons}</b></span>` +
+         `<span class="fb-chip fb-pos${pos ? '' : ' zero'}" style="animation-delay:.1s">${t('位置')}<b>${pos}</b></span>`;
 }
 
 /* ---------------- 道具 ---------------- */
@@ -587,10 +588,10 @@ $('#item-magnet').addEventListener('click', () => {
     grid += `<button class="key" data-pick="${idx}" style="background:${ic.color}"><span class="key-num">${idx}</span><img src="${ICON_PATH(ic.id)}"></button>`;
   });
   const box = openModal(`
-    <h3>🧲 磁铁探测</h3>
-    <p>选一个图标，磁铁会告诉你它<b>在不在</b>密码里${itemFree ? '（代价：免费！）' : '（代价：+1 步）'}</p>
+    <h3>${t('🧲 磁铁探测')}</h3>
+    <p>${t("选一个图标，磁铁会告诉你它<b>在不在</b>密码里")}${itemFree ? t("（代价：免费！）") : t("（代价：+1 步）")}</p>
     <div class="pick-grid">${grid}</div>
-    <div class="modal-actions"><button class="big-btn" id="m-cancel">先不用</button></div>`);
+    <div class="modal-actions"><button class="big-btn" id="m-cancel">${t('先不用')}</button></div>`);
   box.querySelector('#m-cancel').addEventListener('click', closeModal);
   box.querySelectorAll('[data-pick]').forEach(btn => btn.addEventListener('click', () => {
     const idx = +btn.dataset.pick;
@@ -600,11 +601,11 @@ $('#item-magnet').addEventListener('click', () => {
     $('#item-magnet').classList.add('used');
     game.marks[idx] = inCode ? 'yes' : 'off';
     syncKeyMarks();
-    addIntel(`<img src="assets/icons/magnet.png">${chipIconHTML(idx)}${inCode ? '在密码里！' : '不在'}`, inCode);
+    addIntel(`<img src="assets/icons/magnet.png">${chipIconHTML(idx)}${inCode ? t("在密码里！") : t("不在")}`, inCode);
     updateCounters(true);
     closeModal();
     sfx('ability', 0.55);
-    toast(inCode ? `${ICONS[idx].name} 在密码里！` : `${ICONS[idx].name} 不在密码里`, ICON_PATH('magnet'));
+    toast(inCode ? T`${ICONS[idx].name} 在密码里！` : T`${ICONS[idx].name} 不在密码里`, ICON_PATH('magnet'));
   }));
 });
 $('#item-scope').addEventListener('click', () => {
@@ -615,10 +616,10 @@ $('#item-scope').addEventListener('click', () => {
     picks += `<div class="tile" data-pos="${i}">${i + 1}</div>`;
   }
   const box = openModal(`
-    <h3>🔭 望远镜偷看</h3>
-    <p>选一个位置，直接看到那里的图标${scopeFree ? '（代价：免费！）' : '（代价：+3 步，慎用！）'}</p>
+    <h3>${t('🔭 望远镜偷看')}</h3>
+    <p>${t("选一个位置，直接看到那里的图标")}${scopeFree ? t("（代价：免费！）") : t("（代价：+3 步，慎用！）")}</p>
     <div class="pos-pick">${picks}</div>
-    <div class="modal-actions"><button class="big-btn" id="m-cancel">先不用</button></div>`);
+    <div class="modal-actions"><button class="big-btn" id="m-cancel">${t('先不用')}</button></div>`);
   box.querySelector('#m-cancel').addEventListener('click', closeModal);
   box.querySelectorAll('[data-pos]').forEach(t => t.addEventListener('click', () => {
     const pos = +t.dataset.pos;
@@ -629,11 +630,11 @@ $('#item-scope').addEventListener('click', () => {
     game.revealed[pos] = idx;
     game.marks[idx] = 'yes';
     syncKeyMarks();
-    addIntel(`<img src="assets/icons/binoculars.png">第${pos + 1}位 = ${chipIconHTML(idx)}`, true);
+    addIntel(`<img src="assets/icons/binoculars.png">${t("第%1位", pos + 1)} = ${chipIconHTML(idx)}`, true);
     updateCounters(true);
     closeModal();
     sfx('ability', 0.5);
-    toast(`第 ${pos + 1} 位是 ${ICONS[idx].name}!`, ICON_PATH('binoculars'));
+    toast(T`第 ${pos + 1} 位是 ${ICONS[idx].name}!`, ICON_PATH('binoculars'));
   }));
 });
 
@@ -643,24 +644,24 @@ $('#item-ad').addEventListener('click', () => {
   if (!game.active || game.finished || game.pendingEnd || !game.items.ad) return;
   const candidates = ICONS.map((_, i) => i)
     .filter(i => !game.secret.includes(String(i)) && game.marks[i] !== 'off');
-  if (!candidates.length) { toast('没有可排除的图标啦，广告小猫也帮不上忙', ICON_PATH('video')); return; }
+  if (!candidates.length) { toast(t("没有可排除的图标啦，广告小猫也帮不上忙"), ICON_PATH('video')); return; }
   const seqAtOpen = game.seq;
   const gif = Math.random() < 0.5 ? 'cat_add.gif' : 'dance.gif';
   openModal(`
-    <h3>📺 广告时间</h3>
+    <h3>${t('📺 广告时间')}</h3>
     <div class="ad-stage">
       <img class="ad-gif" src="assets/ads/${gif}" alt="广告">
-      <span class="ad-tag">广告 · AD</span>
+      <span class="ad-tag">${t('广告 · AD')}</span>
       <span class="ad-count" id="ad-count">15</span>
     </div>
-    <p style="text-align:center">看完广告，小猫帮你<b>排除一个不在密码里的图标</b></p>
+    <p style="text-align:center">${t('看完广告，小猫帮你')}<b>${t('排除一个不在密码里的图标')}</b></p>
     <div class="ad-actions" id="ad-actions"></div>`);
   $('#modal-mask').dataset.lock = '1';
   let left = 15;
   clearInterval(adTimerId);
   const closeAd = reward => {
     closeModal(); // closeModal 会清倒计时和锁
-    if (!reward) { toast('广告没看完，小猫抱着线索走了…', ICON_PATH('cat')); return; }
+    if (!reward) { toast(t("广告没看完，小猫抱着线索走了…"), ICON_PATH('cat')); return; }
     // 对局已结束/已切换时，奖励作废
     if (!game.active || game.finished || game.pendingEnd || game.seq !== seqAtOpen) return;
     const idx = candidates[(Math.random() * candidates.length) | 0];
@@ -668,10 +669,10 @@ $('#item-ad').addEventListener('click', () => {
     $('#item-ad').classList.add('used');
     game.marks[idx] = 'off';
     syncKeyMarks();
-    addIntel(`<img src="assets/icons/video.png">${chipIconHTML(idx)}不在（喵）`, false);
+    addIntel(`<img src="assets/icons/video.png">${chipIconHTML(idx)}${t("不在（喵）")}`, false);
     sfx('ability', 0.55);
     sfx('meow', 0.6);
-    toast(`广告小猫说：${ICONS[idx].name} 不在密码里！`, ICON_PATH('cat'));
+    toast(T`广告小猫说：${ICONS[idx].name} 不在密码里！`, ICON_PATH('cat'));
   };
   adTimerId = setInterval(() => {
     left--;
@@ -679,7 +680,7 @@ $('#item-ad').addEventListener('click', () => {
     if (!cnt) { clearInterval(adTimerId); return; } // 弹窗已被别处关闭
     cnt.textContent = left;
     if (left === 12) {
-      const skip = el('button', 'big-btn', '跳过广告（放弃奖励）');
+      const skip = el('button', 'big-btn', t('跳过广告（放弃奖励）'));
       skip.addEventListener('click', () => closeAd(false));
       $('#ad-actions').appendChild(skip);
     }
@@ -697,11 +698,11 @@ function openOath() {
     iconGrid += `<button class="key" data-oath="${idx}" style="background:${ic.color}"><span class="key-num">${idx}</span><img src="${ICON_PATH(ic.id)}"></button>`;
   });
   const box = openModal(`
-    <h3>📜 立下宣言</h3>
-    <p>先选<b>位置</b>，再选<b>图标</b>。应验立减 2 步，落空 +1 步——只有一次机会！</p>
+    <h3>${t('📜 立下宣言')}</h3>
+    <p>${t('先选')}<b>${t('位置')}</b>${t('，再选')}<b>${t('图标')}</b>${t('。应验立减 2 步，落空 +1 步——只有一次机会！')}</p>
     <div class="pos-pick" id="oath-pos">${posPick}</div>
     <div class="pick-grid" id="oath-icons" style="opacity:.35;pointer-events:none">${iconGrid}</div>
-    <div class="modal-actions"><button class="big-btn" id="m-cancel">再想想</button></div>`);
+    <div class="modal-actions"><button class="big-btn" id="m-cancel">${t('再想想')}</button></div>`);
   let pos = -1;
   box.querySelector('#m-cancel').addEventListener('click', closeModal);
   box.querySelectorAll('[data-pos]').forEach(t => t.addEventListener('click', () => {
@@ -725,15 +726,15 @@ function openOath() {
       game.penalty -= 2;
       game.marks[idx] = 'yes';
       game.revealed[pos] = idx;
-      addIntel(`📜 宣言应验！第${pos + 1}位 = ${chipIconHTML(idx)}(−2 步）`, true);
+      addIntel(T`📜 宣言应验！第${pos + 1}位 = ${chipIconHTML(idx)}(−2 步）`, true);
       confetti(40);
       sfx('win', 0.5);
-      toast(`神预言！第 ${pos + 1} 位就是 ${ICONS[idx].name}，步数 −2`, ICON_PATH('flag'));
+      toast(T`神预言！第 ${pos + 1} 位就是 ${ICONS[idx].name}，步数 −2`, ICON_PATH('flag'));
     } else {
       game.penalty += 1;
-      addIntel(`📜 宣言落空：第${pos + 1}位不是${chipIconHTML(idx)}(+1 步）`, false);
+      addIntel(T`📜 宣言落空：第${pos + 1}位不是${chipIconHTML(idx)}(+1 步）`, false);
       sfx('completed', 0.45);
-      toast(`宣言落空…第 ${pos + 1} 位不是 ${ICONS[idx].name},+1 步`, ICON_PATH('flag'));
+      toast(T`宣言落空…第 ${pos + 1} 位不是 ${ICONS[idx].name},+1 步`, ICON_PATH('flag'));
     }
     syncKeyMarks();
     updateCounters(true);
@@ -744,10 +745,10 @@ function openOath() {
 function offerRevive() {
   const box = openModal(`
     <img class="card-icon" src="assets/icons/heart.png" style="display:block;margin:0 auto 8px">
-    <h3>差一点点！</h3>
-    <p style="text-align:center">机会用完了，但还有救——看 15 秒小广告立即复活：<br><b>🎁 +3 次猜测机会，步数还能 −2</b></p>
-    <div class="modal-actions"><button class="big-btn green" id="rv-watch">看广告复活</button></div>
-    <div class="modal-actions"><button class="big-btn" id="rv-no">放弃，认命了</button></div>`);
+    <h3>${t('差一点点！')}</h3>
+    <p style="text-align:center">${t('机会用完了，但还有救——看 15 秒小广告立即复活：')}<br><b>${t('🎁 +3 次猜测机会，步数还能 −2')}</b></p>
+    <div class="modal-actions"><button class="big-btn green" id="rv-watch">${t('看广告复活')}</button></div>
+    <div class="modal-actions"><button class="big-btn" id="rv-no">${t('放弃，认命了')}</button></div>`);
   $('#modal-mask').dataset.lock = '1';
   box.querySelector('#rv-no').addEventListener('click', () => { closeModal(); finishGame(false); });
   box.querySelector('#rv-watch').addEventListener('click', () => playReviveAd());
@@ -756,13 +757,13 @@ function playReviveAd() {
   const seqAtOpen = game.seq;
   const gif = Math.random() < 0.5 ? 'cat_add.gif' : 'dance.gif';
   openModal(`
-    <h3>📺 复活广告</h3>
+    <h3>${t('📺 复活广告')}</h3>
     <div class="ad-stage">
       <img class="ad-gif" src="assets/ads/${gif}" alt="广告">
-      <span class="ad-tag">广告 · AD</span>
+      <span class="ad-tag">${t('广告 · AD')}</span>
       <span class="ad-count" id="ad-count">15</span>
     </div>
-    <p style="text-align:center">看完立即复活：+3 次机会，步数 −2</p>
+    <p style="text-align:center">${t('看完立即复活：+3 次机会，步数 −2')}</p>
     <div class="ad-actions" id="ad-actions"></div>`);
   $('#modal-mask').dataset.lock = '1';
   let left = 15;
@@ -773,7 +774,7 @@ function playReviveAd() {
     if (!cnt) { clearInterval(adTimerId); return; }
     cnt.textContent = left;
     if (left === 12) {
-      const skip = el('button', 'big-btn', '跳过（放弃复活）');
+      const skip = el('button', 'big-btn', t('跳过（放弃复活）'));
       skip.addEventListener('click', () => { closeModal(); finishGame(false); });
       $('#ad-actions').appendChild(skip);
     }
@@ -792,17 +793,17 @@ function doRevive() {
   updateCounters(true);
   confetti(50);
   sfx('win', 0.5);
-  toast('复活成功！+3 次机会，步数 −2', ICON_PATH('heart'));
+  toast(t("复活成功！+3 次机会，步数 −2"), ICON_PATH('heart'));
 }
 
 $('#btn-giveup').addEventListener('click', () => {
   if (!game.active || game.finished || game.pendingEnd) return;
   const box = openModal(`
-    <h3>👻 确定认输？</h3>
-    <p>会直接揭晓答案${game.mode === 'daily' ? '，并中断每日连胜' : ''}${game.mode.startsWith('duel') ? '，对战将记为「未破解」' : ''}。</p>
+    <h3>${t('👻 确定认输？')}</h3>
+    <p>${t("会直接揭晓答案")}${game.mode === 'daily' ? t('，并中断每日连胜') : ''}${game.mode.startsWith('duel') ? t('，对战将记为「未破解」') : ''}。</p>
     <div class="modal-actions">
-      <button class="big-btn" id="m-cancel">再挣扎一下</button>
-      <button class="big-btn primary" id="m-yes">认输</button>
+      <button class="big-btn" id="m-cancel">${t('再挣扎一下')}</button>
+      <button class="big-btn primary" id="m-yes">${t('认输')}</button>
     </div>`);
   box.querySelector('#m-cancel').addEventListener('click', closeModal);
   box.querySelector('#m-yes').addEventListener('click', () => { closeModal(); finishGame(false, true); });
@@ -836,7 +837,7 @@ function finishGame(win, surrendered = false) {
     // 最佳步数只统计经典 4 格玩法，变体步数没有可比性
     if (game.mode !== 'variant' && (!store.best || steps < store.best)) {
       store.best = steps;
-      if (store.played > 1) setTimeout(() => toast('新纪录！', ICON_PATH('ranking')), 1200);
+      if (store.played > 1) setTimeout(() => toast(t("新纪录！"), ICON_PATH('ranking')), 1200);
     }
   }
   if (game.mode === 'daily') {
@@ -872,10 +873,10 @@ function starsHTML(n) {
   for (let i = 0; i < 3; i++) h += `<img src="assets/icons/star5.png" class="${i < n ? '' : 'dim'}">`;
   return `<div class="result-stars">${h}</div>`;
 }
-function stepsLabel(s) { return s >= FAIL_STEPS ? '未破解' : s + ' 步'; }
+function stepsLabel(s) { return s >= FAIL_STEPS ? t(t("未破解")) : s + t(' 步'); }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
-async function copyText(text, okMsg = '已复制，快去粘贴给好友！') {
+async function copyText(text, okMsg = t("已复制，快去粘贴给好友！")) {
   try {
     await navigator.clipboard.writeText(text);
     toast(okMsg, ICON_PATH('copy'));
@@ -896,34 +897,34 @@ function answerStripHTML(code) {
 }
 function renderResult({ win, steps, timeSec, surrendered }) {
   const card = $('#result-card');
-  const timeStr = `${(timeSec / 60) | 0}分${timeSec % 60}秒`;
+  const timeStr = t("%1分%2秒", (timeSec / 60) | 0, timeSec % 60);
   const grid = game.guesses.map(g => g.a + ',' + g.b);
   let html = '';
 
   if (game.mode === 'daily' || game.mode === 'free' || game.mode === 'variant') {
     const v = game.variant;
-    const title = win ? ['密码破解！', '全部猜中！', '解码天才！'][(Math.random() * 3) | 0] : (surrendered ? '下次再战' : '密码逃走了…');
+    const title = win ? [t("密码破解！"), t("全部猜中！"), t("解码天才！")][(Math.random() * 3) | 0] : (surrendered ? t("下次再战") : t("密码逃走了…"));
     const shareText = game.mode === 'daily'
-      ? `码上猜 CodePop 每日挑战 #${game.dailyNum}\n${win ? `${steps} 步破解 ${'⭐'.repeat(starCount(steps))}` : '未能破解 💦'}\n${shareGrid(grid)}\n${baseUrl()}`
+      ? T`码上猜 CodePop 每日挑战 #${game.dailyNum}\n${win ? T`${steps} 步破解 ${'⭐'.repeat(starCount(steps))}` : t("未能破解 💦")}\n${shareGrid(grid)}\n${baseUrl()}`
       : game.mode === 'variant'
-        ? `码上猜 · 变奏挑战【${v.emoji}${v.name}】\n${win ? `${steps} 步破解！` : '把我难住了 💦'}\n${shareGrid(grid, game.len)}\n你也来试试：${baseUrl()}`
+        ? T`码上猜 · 变奏挑战【${v.emoji}${v.name}】\n${win ? T`${steps} 步破解！` : t("把我难住了 💦")}\n${shareGrid(grid, game.len)}\n你也来试试：${baseUrl()}`
         : (win
-          ? `我在「码上猜」用 ${steps} 步破解了随机密码！\n${shareGrid(grid)}\n你也来试试：${baseUrl()}`
-          : `随机密码把我难住了 💦 你来试试？\n${shareGrid(grid)}\n${baseUrl()}`);
+          ? T`我在「码上猜」用 ${steps} 步破解了随机密码！\n${shareGrid(grid)}\n你也来试试：${baseUrl()}`
+          : T`随机密码把我难住了 💦 你来试试？\n${shareGrid(grid)}\n${baseUrl()}`);
     html = `
       <img class="card-icon" src="assets/icons/${win ? 'crown' : 'ghost'}.png">
       <div class="card-title">${title}</div>
       ${win && game.mode !== 'variant' ? starsHTML(starCount(steps)) : ''}
-      ${game.mode === 'variant' ? `<div class="card-sub">${v.emoji} ${v.name} · ${win ? `${steps} 步` : '未破解'}</div>` : ''}
-      <div class="card-sub">${win ? `${steps} 步 · 用时 ${timeStr}` : '答案是——'}</div>
+      ${game.mode === 'variant' ? `<div class="card-sub">${v.emoji} ${v.name} · ${win ? t("%1 步", steps) : t("未破解")}</div>` : ''}
+      <div class="card-sub">${win ? t("%1 步 · 用时 %2", steps, timeStr) : t("答案是——")}</div>
       ${answerStripHTML(game.secret)}
-      ${game.mode === 'daily' ? `<div class="card-sub">🔥 连胜 ${store.streak} 天（最高 ${store.maxStreak})</div>` : ''}
+      ${game.mode === 'daily' ? `<div class="card-sub">${t("🔥 连胜 %1 天（最高 %2）", store.streak, store.maxStreak)}</div>` : ''}
       <div class="share-box">${esc(shareText)}</div>
       <div class="card-actions">
-        <button class="big-btn green" id="r-share"><img src="assets/icons/share.png">分享战报</button>
-        ${game.mode === 'free' ? `<button class="big-btn blue" id="r-again"><img src="assets/icons/dice.png">再来一局</button>` : ''}
-        ${game.mode === 'variant' ? `<button class="big-btn blue" id="r-again-variant">🎲 换个变奏再来</button>` : ''}
-        <button class="big-btn" id="r-home"><img src="assets/icons/arrow-left.png">回主页</button>
+        <button class="big-btn green" id="r-share"><img src="assets/icons/share.png">${t("分享战报")}</button>
+        ${game.mode === 'free' ? `<button class="big-btn blue" id="r-again"><img src="assets/icons/dice.png">${t("再来一局")}</button>` : ''}
+        ${game.mode === 'variant' ? `<button class="big-btn blue" id="r-again-variant">${t("🎲 换个变奏再来")}</button>` : ''}
+        <button class="big-btn" id="r-home"><img src="assets/icons/arrow-left.png">${t("回主页")}</button>
       </div>`;
     card.innerHTML = html;
     $('#r-share').addEventListener('click', () => shareOrCopy(shareText));
@@ -939,21 +940,21 @@ function renderResult({ win, steps, timeSec, surrendered }) {
     const myResult = { steps: win ? steps : FAIL_STEPS, grid };
     html = `
       <img class="card-icon" src="assets/icons/${win ? 'sword' : 'heart-break'}.png">
-      <div class="card-title">${win ? `破解了 ${esc(p.n)} 的密码！` : `没能破解 ${esc(p.n)} 的密码`}</div>
-      <div class="card-sub">${win ? `${steps} 步 · 用时 ${timeStr}` : '答案是——'}</div>
+      <div class="card-title">${win ? t("破解了 %1 的密码！", esc(p.n)) : t("没能破解 %1 的密码", esc(p.n))}</div>
+      <div class="card-sub">${win ? t("%1 步 · 用时 %2", steps, timeStr) : t("答案是——")}</div>
       ${win ? '' : answerStripHTML(game.secret)}
-      <div class="card-sub">现在<b>布置你的密码反击</b>，把链接发回去，步数少的人获胜！</div>
+      <div class="card-sub">${t("现在<b>布置你的密码反击</b>，把链接发回去，步数少的人获胜！")}</div>
       <div class="card-actions">
-        <button class="big-btn primary" id="r-counter"><img src="assets/icons/sword.png">出题反击</button>
-        <button class="big-btn" id="r-report"><img src="assets/icons/paper-plane.png">不反击，只发战报</button>
-        <button class="big-btn" id="r-home"><img src="assets/icons/arrow-left.png">回主页</button>
+        <button class="big-btn primary" id="r-counter"><img src="assets/icons/sword.png">${t("出题反击")}</button>
+        <button class="big-btn" id="r-report"><img src="assets/icons/paper-plane.png">${t("不反击，只发战报")}</button>
+        <button class="big-btn" id="r-home"><img src="assets/icons/arrow-left.png">${t("回主页")}</button>
       </div>`;
     card.innerHTML = html;
     $('#r-counter').addEventListener('click', () => openSetup('counter', { orig: p, myResult }));
     $('#r-report').addEventListener('click', () => {
       const link = duelLink({ t: 'c2f', an: p.n, bn: myName(), ac: p.c, bs: myResult.steps, bg: grid });
-      showShareModal('战报链接已生成', `把链接发给 ${esc(p.n)},TA 就能看到你的战绩`, link,
-        `我${win ? `只用 ${steps} 步就` : '没能'}破解了你的图标密码！\n${shareGrid(grid)}\n${link}`);
+      showShareModal(t("战报链接已生成"), t("把链接发给 %1，TA 就能看到你的战绩", esc(p.n)), link,
+        T`我${win ? T`只用 ${steps} 步就` : t("没能")}破解了你的图标密码！\n${shareGrid(grid)}\n${link}`);
     });
     $('#r-home').addEventListener('click', goHome);
   }
@@ -968,15 +969,15 @@ function renderResult({ win, steps, timeSec, surrendered }) {
     if (verdict === 'me') store.duelWins++;
     save();
     const link = duelLink({ t: 'c3', an: p.an, bn: p.bn, as, bs });
-    const shareText = `「码上猜」对决判决书 ⚖️\n${esc(p.an)}:${stepsLabel(as)} vs ${esc(p.bn)}:${stepsLabel(bs)}\n${verdictText(verdict, p.an, p.bn)}\n${link}`;
+    const shareText = T`「码上猜」对决判决书 ⚖️\n${esc(p.an)}:${stepsLabel(as)} vs ${esc(p.bn)}:${stepsLabel(bs)}\n${verdictText(verdict, p.an, p.bn)}\n${link}`;
     card.innerHTML = `
       ${verdictHTML(verdict, { name: p.an, steps: as }, { name: p.bn, steps: bs })}
-      <div class="card-sub">把判决书发给 ${esc(p.bn)}，让 TA 心服口服！</div>
+      <div class="card-sub">${t("把判决书发给 %1，让 TA 心服口服！", esc(p.bn))}</div>
       <div class="share-box">${esc(shareText)}</div>
       <div class="card-actions">
-        <button class="big-btn green" id="r-share"><img src="assets/icons/share.png">发送判决书</button>
-        <button class="big-btn blue" id="r-rematch"><img src="assets/icons/sword.png">再战一局</button>
-        <button class="big-btn" id="r-home"><img src="assets/icons/arrow-left.png">回主页</button>
+        <button class="big-btn green" id="r-share"><img src="assets/icons/share.png">${t("发送判决书")}</button>
+        <button class="big-btn blue" id="r-rematch"><img src="assets/icons/sword.png">${t("再战一局")}</button>
+        <button class="big-btn" id="r-home"><img src="assets/icons/arrow-left.png">${t("回主页")}</button>
       </div>`;
     if (verdict === 'me') { sfx('win', 0.5); confetti(60); }
     $('#r-share').addEventListener('click', () => shareOrCopy(shareText));
@@ -988,14 +989,14 @@ function renderResult({ win, steps, timeSec, surrendered }) {
 }
 function verdictOf(as, bs) { return as < bs ? 'me' : bs < as ? 'them' : 'tie'; }
 function verdictText(v, an, bn) {
-  return v === 'me' ? `👑 ${an} 获胜！` : v === 'them' ? `👑 ${bn} 获胜！` : '🤝 平局，棋逢对手！';
+  return v === 'me' ? t('👑 %1 获胜！', an) : v === 'them' ? t('👑 %1 获胜！', bn) : t('🤝 平局，棋逢对手！');
 }
 function verdictHTML(v, me, them) {
   // me = 当前视角（A);them = 对手（B)
   const crown = `<img class="vs-crown" src="assets/icons/crown.png">`;
   return `
     <img class="card-icon" src="assets/icons/${v === 'me' ? 'crown' : v === 'them' ? 'heart-break' : 'friends'}.png">
-    <div class="card-title">${v === 'me' ? '你赢了！' : v === 'them' ? '惜败！' : '平局！'}</div>
+    <div class="card-title">${v === 'me' ? t("你赢了！") : v === 'them' ? t("惜败！") : t("平局！")}</div>
     <div class="vs-table">
       <div class="vs-side ${v === 'me' ? 'winner' : ''}">${v === 'me' ? crown : ''}
         <div class="vs-name">${esc(me.name)}</div><div class="vs-steps">${me.steps >= FAIL_STEPS ? '💥' : me.steps}</div><div class="vs-label">${stepsLabel(me.steps)}</div>
@@ -1010,13 +1011,13 @@ function verdictHTML(v, me, them) {
    出题（新对战 / 反击）
    ============================================================ */
 const setup = { picks: [], mode: 'c1', ctx: null };
-function myName() { return store.name || '神秘玩家'; }
+function myName() { return store.name || t("神秘玩家"); }
 
 function openSetup(mode, ctx = null) {
   setup.picks = [];
   setup.mode = mode;
   setup.ctx = ctx;
-  $('#setup-title').textContent = mode === 'counter' ? '布置反击密码！' : '布置你的图标密码';
+  $('#setup-title').textContent = mode === 'counter' ? t('布置反击密码！') : t('布置你的图标密码');
   $('#setup-name').value = store.name;
   $('#setup-msg').value = '';
   renderSetupSlots();
@@ -1034,7 +1035,7 @@ function renderSetupSlots() {
       const t = el('div', 'tile filled');
       t.style.background = ICONS[idx].color;
       t.innerHTML = `<img src="${ICON_PATH(ICONS[idx].id)}">`;
-      t.title = '点击移除';
+      t.title = t('点击移除');
       t.addEventListener('click', () => { setup.picks.splice(i, 1); sfx('ui', 0.35); renderSetupSlots(); syncSetupKeys(); });
       wrap.appendChild(t);
     }
@@ -1084,12 +1085,12 @@ $('#btn-setup-go').addEventListener('click', () => {
     const { orig, myResult } = setup.ctx;
     const link = duelLink({ t: 'c2', an: orig.n, bn: myName(), ac: orig.c, c: code, bs: myResult.steps, m: msg });
     const bsLabel = stepsLabel(myResult.steps);
-    showShareModal('反击链接已生成！', `发给 ${esc(orig.n)}:TA 会先看到你的战绩（${bsLabel})，再挑战你的密码，一决胜负！`, link,
-      `我${myResult.steps >= FAIL_STEPS ? '没能破解' : `用 ${myResult.steps} 步破解了`}你的图标密码，现在轮到你了！敢接招吗？\n${link}`);
+    showShareModal(t("反击链接已生成！"), t("发给 %1：TA 会先看到你的战绩（%2），再挑战你的密码，一决胜负！", esc(orig.n), bsLabel), link,
+      T`我${myResult.steps >= FAIL_STEPS ? t("没能破解") : T`用 ${myResult.steps} 步破解了`}你的图标密码，现在轮到你了！敢接招吗？\n${link}`);
   } else {
     const link = duelLink({ t: 'c1', n: myName(), c: code, m: msg });
-    showShareModal('挑战链接已生成！', '发给好友，TA 打开就能开猜。你自己可别点开偷看哦~', link,
-      `我在「码上猜」藏了一组图标密码，敢来破译吗？码上猜，马上猜！\n${link}`);
+    showShareModal(t("挑战链接已生成！"), t("发给好友，TA 打开就能开猜。你自己可别点开偷看哦~"), link,
+      T`我在「码上猜」藏了一组图标密码，敢来破译吗？码上猜，马上猜！\n${link}`);
   }
 });
 function showShareModal(title, sub, link, shareText) {
@@ -1098,10 +1099,10 @@ function showShareModal(title, sub, link, shareText) {
     <p style="text-align:center">${sub}</p>
     <div class="share-box">${esc(shareText)}</div>
     <div class="modal-actions">
-      <button class="big-btn green" id="s-copy"><img src="assets/icons/copy.png">复制</button>
-      ${navigator.share ? '<button class="big-btn blue" id="s-share"><img src="assets/icons/share.png">分享</button>' : ''}
+      <button class="big-btn green" id="s-copy"><img src="assets/icons/copy.png">${t("复制")}</button>
+      ${navigator.share ? '<button class="big-btn blue" id="s-share"><img src="assets/icons/share.png">${t("分享")}</button>' : ''}
     </div>
-    <div class="modal-actions"><button class="big-btn" id="s-home"><img src="assets/icons/arrow-left.png">回主页</button></div>`);
+    <div class="modal-actions"><button class="big-btn" id="s-home"><img src="assets/icons/arrow-left.png">${t("回主页")}</button></div>`);
   sfx('ability', 0.45);
   box.querySelector('#s-copy').addEventListener('click', () => copyText(shareText));
   if (box.querySelector('#s-share')) box.querySelector('#s-share').addEventListener('click', () => navigator.share({ text: shareText }).catch(() => {}));
@@ -1116,12 +1117,12 @@ function handleIncoming(p) {
   if (p.t === 'c1') {
     card.innerHTML = `
       <img class="card-icon" src="assets/icons/sword.png">
-      <div class="card-title">${esc(p.n)} 向你发起挑战！</div>
+      <div class="card-title">${t("%1 向你发起挑战！", esc(p.n))}</div>
       ${p.m ? `<div class="card-msg">“${esc(p.m)}”</div>` : ''}
-      <div class="card-sub">TA 藏了一组 4 个图标的密码。<br>每猜一次会告诉你：<br><span class="fb-chip fb-icons">图案</span> 猜对了几个图标&nbsp;&nbsp;<span class="fb-chip fb-pos">位置</span> 其中几个连位置都对<br>用最少的步数破解它！</div>
+      <div class="card-sub">${t("TA 藏了一组 4 个图标的密码。")}<br>${t("每猜一次会告诉你：")}<br><span class="fb-chip fb-icons">${t("图案")}</span> ${t("猜对了几个图标")}&nbsp;&nbsp;<span class="fb-chip fb-pos">${t("位置")}</span> ${t("其中几个连位置都对")}<br>${t("用最少的步数破解它！")}</div>
       <div class="card-actions">
-        <button class="big-btn primary" id="i-go"><img src="assets/icons/sword.png">开始破解</button>
-        <button class="big-btn" id="i-home"><img src="assets/icons/arrow-left.png">先不了</button>
+        <button class="big-btn primary" id="i-go"><img src="assets/icons/sword.png">${t("开始破解")}</button>
+        <button class="big-btn" id="i-home"><img src="assets/icons/arrow-left.png">${t("先不了")}</button>
       </div>`;
     $('#i-go').addEventListener('click', () => startGame('duel1', p.c, p));
     $('#i-home').addEventListener('click', goHome);
@@ -1129,16 +1130,16 @@ function handleIncoming(p) {
   else if (p.t === 'c2') {
     card.innerHTML = `
       <img class="card-icon" src="assets/icons/shield.png">
-      <div class="card-title">${esc(p.bn)} 应战了！</div>
+      <div class="card-title">${t("%1 应战了！", esc(p.bn))}</div>
       ${p.m ? `<div class="card-msg">“${esc(p.m)}”</div>` : ''}
-      <div class="card-sub">TA ${p.bs >= FAIL_STEPS ? '<b>没能破解</b>你的密码 💥' : `用 <b>${p.bs} 步</b>破解了你的密码`}，并布下了反击密码。<br>轮到你了——用更少的步数赢下对决！</div>
+      <div class="card-sub">${p.bs >= FAIL_STEPS ? t("TA <b>没能破解</b>你的密码 💥") : t("TA 用 <b>%1 步</b>破解了你的密码", p.bs)}${t("，并布下了反击密码。")}<br>${t("轮到你了——用更少的步数赢下对决！")}</div>
       <div class="vs-table">
-        <div class="vs-side"><div class="vs-name">${esc(p.an)}（你）</div><div class="vs-steps">?</div><div class="vs-label">等你出手</div></div>
+        <div class="vs-side"><div class="vs-name">${esc(p.an)}${t("（你）")}</div><div class="vs-steps">?</div><div class="vs-label">${t("等你出手")}</div></div>
         <div class="vs-side"><div class="vs-name">${esc(p.bn)}</div><div class="vs-steps">${p.bs >= FAIL_STEPS ? '💥' : p.bs}</div><div class="vs-label">${stepsLabel(p.bs)}</div></div>
       </div>
       <div class="card-actions">
-        <button class="big-btn primary" id="i-go"><img src="assets/icons/shield.png">迎战！</button>
-        <button class="big-btn" id="i-home"><img src="assets/icons/arrow-left.png">先不了</button>
+        <button class="big-btn primary" id="i-go"><img src="assets/icons/shield.png">${t("迎战！")}</button>
+        <button class="big-btn" id="i-home"><img src="assets/icons/arrow-left.png">${t("先不了")}</button>
       </div>`;
     $('#i-go').addEventListener('click', () => startGame('duel2', p.c, p));
     $('#i-home').addEventListener('click', goHome);
@@ -1146,12 +1147,12 @@ function handleIncoming(p) {
   else if (p.t === 'c2f') {
     card.innerHTML = `
       <img class="card-icon" src="assets/icons/paper-plane.png">
-      <div class="card-title">来自 ${esc(p.bn)} 的战报</div>
-      <div class="card-sub">你的密码被 ${esc(p.bn)} ${p.bs >= FAIL_STEPS ? '<b>挑战失败</b> 💥 没猜出来！' : `用 <b>${p.bs} 步</b>破解了！`}</div>
+      <div class="card-title">${t("来自 %1 的战报", esc(p.bn))}</div>
+      <div class="card-sub">${p.bs >= FAIL_STEPS ? t("你的密码被 %1 <b>挑战失败</b> 💥 没猜出来！", esc(p.bn)) : t("你的密码被 %1 用 <b>%2 步</b>破解了！", esc(p.bn), p.bs)}</div>
       ${p.bg ? `<div class="share-box" style="text-align:center">${shareGrid(p.bg)}</div>` : ''}
       <div class="card-actions">
-        <button class="big-btn primary" id="i-rematch"><img src="assets/icons/sword.png">回敬一题</button>
-        <button class="big-btn" id="i-home"><img src="assets/icons/arrow-left.png">回主页</button>
+        <button class="big-btn primary" id="i-rematch"><img src="assets/icons/sword.png">${t("回敬一题")}</button>
+        <button class="big-btn" id="i-home"><img src="assets/icons/arrow-left.png">${t("回主页")}</button>
       </div>`;
     $('#i-rematch').addEventListener('click', () => openSetup('c1'));
     $('#i-home').addEventListener('click', goHome);
@@ -1169,10 +1170,10 @@ function handleIncoming(p) {
     }
     card.innerHTML = `
       ${verdictHTML(v, { name: p.bn, steps: p.bs }, { name: p.an, steps: p.as })}
-      <div class="card-sub">${v === 'me' ? '实至名归，解码之王！' : v === 'them' ? '差一点点，报仇雪恨走起！' : '棋逢对手，将遇良才！'}</div>
+      <div class="card-sub">${v === 'me' ? t('实至名归，解码之王！') : v === 'them' ? t('差一点点，报仇雪恨走起！') : t('棋逢对手，将遇良才！')}</div>
       <div class="card-actions">
-        <button class="big-btn primary" id="i-rematch"><img src="assets/icons/sword.png">再来一局</button>
-        <button class="big-btn" id="i-home"><img src="assets/icons/arrow-left.png">回主页</button>
+        <button class="big-btn primary" id="i-rematch"><img src="assets/icons/sword.png">${t("再来一局")}</button>
+        <button class="big-btn" id="i-home"><img src="assets/icons/arrow-left.png">${t("回主页")}</button>
       </div>`;
     if (v === 'me') { setTimeout(() => { confetti(70); sfx('win', 0.5); }, 400); }
     $('#i-rematch').addEventListener('click', () => openSetup('c1'));
@@ -1195,11 +1196,11 @@ function renderHomeStats() {
   const y = new Date(); y.setDate(y.getDate() - 1);
   const yest = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`;
   const streakAlive = store.lastDailyWin === todayStr() || store.lastDailyWin === yest;
-  if (store.streak > 0 && streakAlive) chips.push(`<span class="stat-chip"><img src="assets/icons/sun.png">连胜 <b>${store.streak}</b> 天</span>`);
-  if (store.wins > 0) chips.push(`<span class="stat-chip"><img src="assets/icons/tick.png">破解 <b>${store.wins}</b> 次</span>`);
-  if (store.best > 0) chips.push(`<span class="stat-chip"><img src="assets/icons/ranking.png">最佳 <b>${store.best}</b> 步</span>`);
-  if (store.duelWins > 0) chips.push(`<span class="stat-chip"><img src="assets/icons/crown.png">对战赢 <b>${store.duelWins}</b> 场</span>`);
-  s.innerHTML = chips.join('') || `<span class="stat-chip">✨ 第一次玩？点右上角 <b>?</b> 看玩法</span>`;
+  if (store.streak > 0 && streakAlive) chips.push(`<span class="stat-chip"><img src="assets/icons/sun.png">${t("连胜 <b>%1</b> 天", store.streak)}</span>`);
+  if (store.wins > 0) chips.push(`<span class="stat-chip"><img src="assets/icons/tick.png">${t("破解 <b>%1</b> 次", store.wins)}</span>`);
+  if (store.best > 0) chips.push(`<span class="stat-chip"><img src="assets/icons/ranking.png">${t("最佳 <b>%1</b> 步", store.best)}</span>`);
+  if (store.duelWins > 0) chips.push(`<span class="stat-chip"><img src="assets/icons/crown.png">${t("对战赢 <b>%1</b> 场", store.duelWins)}</span>`);
+  s.innerHTML = chips.join('') || `<span class="stat-chip">${t("✨ 第一次玩？点右上角 <b>?</b> 看玩法")}</span>`;
 }
 function renderHeroTiles() {
   const wrap = $('#hero-tiles');
@@ -1219,8 +1220,8 @@ function syncDailyMenu() {
   const done = !!store.daily[todayStr()];
   $('#daily-ribbon').hidden = !done;
   $('#daily-desc').innerHTML = done
-    ? `新密码 <b>${dailyCountdownText()}</b> 后刷新`
-    : '全球同题 · 连胜打卡';
+    ? t('新密码 %1 后刷新', '<b>' + dailyCountdownText() + '</b>')
+    : t("全球同题 · 连胜打卡");
 }
 function goHome() {
   closeModal();
@@ -1250,13 +1251,13 @@ $('#btn-back').addEventListener('click', () => {
   if (game.active && !game.finished && game.mode === 'daily') {
     const guessed = game.guesses.length > 0;
     const box = openModal(`
-      <h3>☀️ 确定退出每日挑战?</h3>
+      <h3>${t("☀️ 确定退出每日挑战？")}</h3>
       <p>${guessed
-        ? '你已经开始猜了——现在退出,<b>今天会记为未破解</b>,连胜也会中断,零点前不能重来哦。'
-        : '还没开始猜,现在退出不影响今天的挑战,稍后可以再来。'}</p>
+        ? t('你已经开始猜了——现在退出，<b>今天会记为未破解</b>，连胜也会中断，零点前不能重来哦。')
+        : t('还没开始猜，现在退出不影响今天的挑战，稍后可以再来。')}</p>
       <div class="modal-actions">
-        <button class="big-btn primary" id="m-stay">继续挑战</button>
-        <button class="big-btn" id="m-leave">${guessed ? '狠心退出' : '退出'}</button>
+        <button class="big-btn primary" id="m-stay">${t("继续挑战")}</button>
+        <button class="big-btn" id="m-leave">${guessed ? t("狠心退出") : t("退出")}</button>
       </div>`);
     box.querySelector('#m-stay').addEventListener('click', closeModal);
     box.querySelector('#m-leave').addEventListener('click', () => { closeModal(); goHome(); });
@@ -1264,11 +1265,11 @@ $('#btn-back').addEventListener('click', () => {
   }
   if (game.active && game.guesses.length > 0 && !game.finished) {
     const box = openModal(`
-      <h3>要离开对局吗？</h3>
-      <p>当前进度不会保存哦。</p>
+      <h3>${t("要离开对局吗？")}</h3>
+      <p>${t("当前进度不会保存哦。")}</p>
       <div class="modal-actions">
-        <button class="big-btn" id="m-stay">继续玩</button>
-        <button class="big-btn primary" id="m-leave">离开</button>
+        <button class="big-btn" id="m-stay">${t("继续玩")}</button>
+        <button class="big-btn primary" id="m-leave">${t("离开")}</button>
       </div>`);
     box.querySelector('#m-stay').addEventListener('click', closeModal);
     box.querySelector('#m-leave').addEventListener('click', () => { closeModal(); goHome(); });
@@ -1290,8 +1291,8 @@ function openVariantIntro(forced = null) {
     <p class="variant-tip">💡 ${v.tip}</p>
     ${v.id === 'family' ? `<div class="variant-fams">${FAMILIES.map(f =>
       `<div class="variant-fam">${f.emoji} ${f.name}${f.members.map(chipIconHTML).join('')}</div>`).join('')}</div>` : ''}
-    <div class="modal-actions"><button class="big-btn primary" id="v-go">开猜！</button></div>
-    <div class="modal-actions"><button class="big-btn" id="v-other">🎲 换一条规则</button></div>`);
+    <div class="modal-actions"><button class="big-btn primary" id="v-go">${t("开猜！")}</button></div>
+    <div class="modal-actions"><button class="big-btn" id="v-other">${t("🎲 换一条规则")}</button></div>`);
   sfx('ability', 0.45);
   box.querySelector('#v-go').addEventListener('click', () => {
     closeModal();
@@ -1308,15 +1309,15 @@ $('#btn-daily').addEventListener('click', () => {
   const done = store.daily[today];
   if (done) {
     // 已完成：直接展示战报
-    const shareText = `码上猜 CodePop 每日挑战 #${dailyNumber()}\n${done.win ? `${done.steps} 步破解 ${'⭐'.repeat(starCount(done.steps))}` : '未能破解 💦'}\n${shareGrid(done.grid)}\n${baseUrl()}`;
+    const shareText = T`码上猜 CodePop 每日挑战 #${dailyNumber()}\n${done.win ? T`${done.steps} 步破解 ${'⭐'.repeat(starCount(done.steps))}` : t("未能破解 💦")}\n${shareGrid(done.grid)}\n${baseUrl()}`;
     $('#result-card').innerHTML = `
       <img class="card-icon" src="assets/icons/sun.png">
-      <div class="card-title">今日挑战已完成</div>
-      <div class="card-sub">${done.win ? `${done.steps} 步破解 · 🔥 连胜 ${store.streak} 天` : '今天没能破解，明天再战！'}<br>新密码 <b>${dailyCountdownText()}</b> 后刷新</div>
+      <div class="card-title">${t("今日挑战已完成")}</div>
+      <div class="card-sub">${done.win ? t("%1 步破解 · 🔥 连胜 %2 天", done.steps, store.streak) : t("今天没能破解，明天再战！")}<br>${t("新密码 %1 后刷新", "<b>" + dailyCountdownText() + "</b>")}</div>
       <div class="share-box">${esc(shareText)}</div>
       <div class="card-actions">
-        <button class="big-btn green" id="r-share"><img src="assets/icons/share.png">分享战报</button>
-        <button class="big-btn" id="r-home"><img src="assets/icons/arrow-left.png">回主页</button>
+        <button class="big-btn green" id="r-share"><img src="assets/icons/share.png">${t("分享战报")}</button>
+        <button class="big-btn" id="r-home"><img src="assets/icons/arrow-left.png">${t("回主页")}</button>
       </div>`;
     $('#r-share').addEventListener('click', () => shareOrCopy(shareText));
     $('#r-home').addEventListener('click', goHome);
@@ -1341,21 +1342,21 @@ $('#logo').addEventListener('click', () => { sfx('meow', 0.6); });
 
 $('#btn-help').addEventListener('click', () => {
   openModal(`
-    <h3>🎯 怎么玩</h3>
-    <p><b>目标：</b>密码是 <b>4 个不重复</b>的图标。用最少的步数，猜出<b>是哪 4 个</b>、<b>按什么顺序</b>排的。</p>
-    <p><b>每猜一次，右边给你两个数：</b><br>
-    <span class="fb-chip fb-icons">图案 <b>2</b></span> 你摆的图标里，有 2 个确实在密码里<br>
-    <span class="fb-chip fb-pos">位置 <b>1</b></span> 这 2 个里面，只有 1 个站对了地方</p>
+    <h3>${t("🎯 怎么玩")}</h3>
+    <p>${t("<b>目标：</b>密码是 <b>4 个不重复</b>的图标。用最少的步数，猜出<b>是哪 4 个</b>、<b>按什么顺序</b>排的。")}</p>
+    <p>${t("<b>每猜一次，右边给你两个数：</b>")}<br>
+    <span class="fb-chip fb-icons">${t("图案")} <b>2</b></span> ${t("你摆的图标里，有 2 个确实在密码里")}<br>
+    <span class="fb-chip fb-pos">${t("位置")} <b>1</b></span> ${t("这 2 个里面，只有 1 个站对了地方")}</p>
     <div class="help-example">
       ${iconTileHTML(0)}${iconTileHTML(2)}${iconTileHTML(4)}${iconTileHTML(7)}
       <div class="help-fb">${feedbackHTML(1, 1)}</div>
     </div>
-    <p style="text-align:center;font-size:12.5px">例：密码是 🍎🐱⭐⚡，你猜 🍎⭐🍀🌙<br>🍎⭐ 都在密码里 → 图案 2;但只有 🍎 站对了地方 → 位置 1</p>
-    <p>注意：它<b>不会告诉你对的是哪几个</b>——推理出来才过瘾！</p>
-    <p><b>道具：</b>🧲 磁铁问一个图标在不在（+1步） · 🔭 望远镜偷看一个位置（+3步） · 📺 看 15 秒小广告，免费排除一个不在的图标</p>
-    <p><b>小技巧：</b>长按或右键键盘图标，可以标记「排除/锁定」帮助推理。</p>
-    <p><b>好友对战：</b>布置密码 → 发链接给好友 → TA 破解后出题反击 → 你迎战 → 步数少者赢！不用同时在线，随时接招。</p>
-    <div class="modal-actions"><button class="big-btn primary" id="m-ok">明白了！</button></div>`)
+    <p style="text-align:center;font-size:12.5px">${t("例：密码是 🍎🐱⭐⚡，你猜 🍎⭐🍀🌙")}<br>${t("🍎⭐ 都在密码里 → 图案 2；但只有 🍎 站对了地方 → 位置 1")}</p>
+    <p>${t("注意：它<b>不会告诉你对的是哪几个</b>——推理出来才过瘾！")}</p>
+    <p>${t("<b>道具：</b>🧲 磁铁问一个图标在不在（+1步） · 🔭 望远镜偷看一个位置（+3步） · 📺 看 15 秒小广告，免费排除一个不在的图标")}</p>
+    <p>${t("<b>小技巧：</b>长按或右键键盘图标，可以标记「排除/锁定」帮助推理。")}</p>
+    <p>${t("<b>好友对战：</b>布置密码 → 发链接给好友 → TA 破解后出题反击 → 你迎战 → 步数少者赢！不用同时在线，随时接招。")}</p>
+    <div class="modal-actions"><button class="big-btn primary" id="m-ok">${t("明白了！")}</button></div>`)
     .querySelector('#m-ok').addEventListener('click', closeModal);
 });
 
@@ -1394,6 +1395,25 @@ document.addEventListener('keydown', e => {
     zone.appendChild(f);
   }
 })();
+
+/* ---------------- 语言切换 ---------------- */
+applyStaticLang(); // 词典已随 i18n-data.js 就绪,翻译静态界面
+$('#btn-lang').addEventListener('click', () => {
+  const rows = LANGS.map(l =>
+    `<button class="big-btn lang-row${l.code === currentLang() ? ' primary' : ''}" data-lang="${l.code}">${l.native}</button>`
+  ).join('');
+  const warn = (game.active && game.guesses.length > 0 && !game.finished)
+    ? `<p style="text-align:center">${t('当前进度不会保存哦。')}</p>` : '';
+  const box = openModal(`
+    <h3>🌐 Language</h3>
+    ${warn}
+    <div class="lang-grid">${rows}</div>`);
+  box.querySelectorAll('[data-lang]').forEach(btn => btn.addEventListener('click', () => {
+    store.lang = btn.dataset.lang;
+    save();
+    location.reload();
+  }));
+});
 
 /* ---------------- 启动 ---------------- */
 window.addEventListener('hashchange', () => {

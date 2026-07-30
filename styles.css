@@ -100,6 +100,11 @@ img { image-rendering: pixelated; }
 .icon-btn:hover { transform: translateY(-2px) scale(1.06); }
 .icon-btn:active { transform: translateY(3px) scale(.94); box-shadow: 0 1px 0 rgba(51,41,78,.9); }
 .icon-btn.muted { background: #e9e2f2; opacity: .75; }
+.icon-btn .lang-glyph { font-size: 20px; line-height: 1; }
+
+/* 语言选择弹窗 */
+.lang-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.lang-grid .lang-row { font-size: 15px; padding: 11px 6px; }
 
 /* ---------- 屏幕容器 ---------- */
 #app { position: relative; z-index: 2; max-width: 520px; margin: 0 auto; padding: 8px 16px 40px; }

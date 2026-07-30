@@ -162,8 +162,8 @@ const famOf = idx => FAMILIES.findIndex(f => f.members.includes(+idx));
 const VARIANTS = [
   {
     id: 'twin', name: '双影日', emoji: '👯', len: 5, allowDup: true,
-    rule: '密码有 5 个格子，其中恰好有一个图标出现两次，并且这两个紧挨在一起；其余 3 个图标互不相同。',
-    tip: '开局故意摆一对双图标，是钓出双影的妙手。',
+    rule: '有一对双胞胎图标混进了密码!5 个格子里,恰好有一个图标出现两次,而且双胞胎永远手拉手紧挨着;其余 3 个图标互不相同。',
+    tip: '老开局今天会失灵——故意摆一对相同图标去"钓"双胞胎,才是今天的妙手。',
     gen(rng = Math.random) {
       const twin = (rng() * ICONS.length) | 0;
       const pairPos = (rng() * 4) | 0; // 双影占据 pairPos 和 pairPos+1
@@ -182,22 +182,53 @@ const VARIANTS = [
     },
   },
   {
-    id: 'family', name: '家族日', emoji: '🎨', len: 4, allowDup: false,
-    rule: '10 个图标分成 3 个色系（开局会钉在情报栏）。密码的色系排列是回文：1号位和4号位同色系，2号位和3号位同色系。图标本身仍然互不相同。',
-    tip: '先探明色系结构，再锁定具体图标。',
+    id: 'family', name: '组队日', emoji: '🎨', len: 4, allowDup: false,
+    rule: '今天图标按色系组队参赛:密码的 4 个图标来自恰好两个色系,每个色系各出两位选手。色系分组开局就钉在情报栏。',
+    tip: '先用一猜摸清是哪两个色系在场,解空间立刻塌掉一大半。',
     gen(rng = Math.random) {
-      // 拒绝采样：随机不重复密码，直到满足色系回文
-      for (let tries = 0; tries < 999; tries++) {
-        const code = randomCode(rng);
-        if (famOf(code[0]) === famOf(code[3]) && famOf(code[1]) === famOf(code[2])) return code;
+      const fa = (rng() * 3) | 0;
+      let fb = (rng() * 3) | 0;
+      while (fb === fa) fb = (rng() * 3) | 0;
+      const pick2 = fam => {
+        const m = [...FAMILIES[fam].members];
+        for (let i = m.length - 1; i > 0; i--) {
+          const j = (rng() * (i + 1)) | 0;
+          [m[i], m[j]] = [m[j], m[i]];
+        }
+        return m.slice(0, 2);
+      };
+      const four = [...pick2(fa), ...pick2(fb)];
+      for (let i = four.length - 1; i > 0; i--) {
+        const j = (rng() * (i + 1)) | 0;
+        [four[i], four[j]] = [four[j], four[i]];
       }
-      return '0312'; // 理论到不了，兜底一个合法回文
+      return four.join('');
     },
   },
   {
+    id: 'vacation', name: '放假日', emoji: '🏖', len: 4, allowDup: false, banCount: 3,
+    rule: '三个图标今天集体请假,绝对不在密码里!开局直接告诉你是哪三位(键盘上已自动划掉),密码从剩下 7 个图标里选 4 个。',
+    tip: '白送的情报也要用好:7 选 4 的开局和 10 选 4 完全不同,别浪费任何一猜。',
+    gen(rng = Math.random) {
+      const all = [...Array(ICONS.length).keys()];
+      for (let i = all.length - 1; i > 0; i--) {
+        const j = (rng() * (i + 1)) | 0;
+        [all[i], all[j]] = [all[j], all[i]];
+      }
+      this.banned = all.slice(0, 3);
+      return all.slice(3, 7).join('');
+    },
+  },
+  {
+    id: 'sale', name: '大甩卖日', emoji: '🛒', len: 4, allowDup: false, maxG: 6, freeItems: true,
+    rule: '情报大甩卖:磁铁和望远镜今天全部免费!代价是——你只有 6 次出手机会(平时是 12 次)。',
+    tip: '今天拼的不是省道具,是问对问题:先买什么情报,决定你能不能 6 步内收网。',
+    gen(rng = Math.random) { return randomCode(rng); },
+  },
+  {
     id: 'oath', name: '宣言日', emoji: '📜', len: 4, allowDup: false,
-    rule: '密码规则和经典一样。但你随时可以「立下宣言」:公开断言某个位置是某个图标——应验立减 2 步，落空 +1 步。每局限一次。',
-    tip: '两个假设二选一拿不准时，宣言比多猜一步更划算。',
+    rule: '侦探的高光时刻:你随时可以公开「立下宣言」,断言某个位置就是某个图标——应验立减 2 步,落空 +1 步。每局限一次。',
+    tip: '推理到两个假设二选一时,宣言的期望收益远高于多猜一步——敢不敢赌你的判断?',
     gen(rng = Math.random) { return randomCode(rng); },
   },
 ];
@@ -295,7 +326,7 @@ const game = {
 let gameSeq = 0;
 // 宣言可能带来负惩罚，步数至少为已猜次数存在感（不出现 0 步破解）
 const stepCount = () => Math.max(game.guesses.length ? 1 : 0, game.guesses.length + game.penalty);
-const maxGuesses = () => MAX_GUESSES + (game.revived ? 3 : 0);
+const maxGuesses = () => ((game.variant && game.variant.maxG) || MAX_GUESSES) + (game.revived ? 3 : 0);
 
 function startGame(mode, secret, duelCtx = null, variant = null) {
   Object.assign(game, {
@@ -336,14 +367,30 @@ function startGame(mode, secret, duelCtx = null, variant = null) {
         addIntel(`${f.emoji} ${f.name} ${f.members.map(chipIconHTML).join('')}`, true);
       });
     }
+    if (variant.id === 'vacation' && variant.banned) {
+      // 休假图标开局即划掉
+      variant.banned.forEach(i => { game.marks[i] = 'off'; });
+      addIntel(`🏖 休假中:${variant.banned.map(chipIconHTML).join('')}`, false);
+      syncKeyMarks();
+    }
   }
+  // 大甩卖日:道具免费,价签同步
+  const freeItems = !!(variant && variant.freeItems);
+  $('#item-magnet .item-cost').textContent = freeItems ? '免费!' : '+1步';
+  $('#item-scope .item-cost').textContent = freeItems ? '免费!' : '+3步';
   appendInputRow();
   updateCounters();
   showScreen('screen-play');
   sfx('start', 0.45);
 }
 function variantChipText(v) {
-  return { twin: '5 格 · 有一对紧挨的双影图标', family: '色系回文：1=4系，2=3系', oath: '可立宣言：应验 −2 步，落空 +1 步' }[v.id] || '';
+  return {
+    twin: '5 格 · 有一对紧挨的双影',
+    family: '两个色系 · 各出两位',
+    vacation: '三位休假,密码 7 选 4',
+    sale: '道具免费 · 只有 6 次机会',
+    oath: '可立宣言:应验 −2,落空 +1',
+  }[v.id] || '';
 }
 function syncOathButton() {
   let btn = $('#item-oath');
@@ -511,6 +558,10 @@ function submitGuess() {
       if (game.mode === 'daily' && !game.revived) return offerRevive();
       return finishGame(false);
     }
+    if (game.variant && game.variant.maxG) {
+      const left = maxGuesses() - game.guesses.length;
+      if (left === 2) toast('注意:只剩 2 次机会了!');
+    }
     appendInputRow();
   }, game.len * 130 + 350);
 }
@@ -531,12 +582,13 @@ function addIntel(html, good) {
 $('#item-magnet').addEventListener('click', () => {
   if (!game.active || game.finished || game.pendingEnd || !game.items.magnet) return;
   let grid = '';
+  const itemFree = !!(game.variant && game.variant.freeItems);
   ICONS.forEach((ic, idx) => {
     grid += `<button class="key" data-pick="${idx}" style="background:${ic.color}"><span class="key-num">${idx}</span><img src="${ICON_PATH(ic.id)}"></button>`;
   });
   const box = openModal(`
     <h3>🧲 磁铁探测</h3>
-    <p>选一个图标，磁铁会告诉你它<b>在不在</b>密码里（代价：+1 步）</p>
+    <p>选一个图标，磁铁会告诉你它<b>在不在</b>密码里${itemFree ? '（代价：免费！）' : '（代价：+1 步）'}</p>
     <div class="pick-grid">${grid}</div>
     <div class="modal-actions"><button class="big-btn" id="m-cancel">先不用</button></div>`);
   box.querySelector('#m-cancel').addEventListener('click', closeModal);
@@ -544,7 +596,7 @@ $('#item-magnet').addEventListener('click', () => {
     const idx = +btn.dataset.pick;
     const inCode = game.secret.includes(String(idx));
     game.items.magnet = false;
-    game.penalty += 1;
+    game.penalty += itemFree ? 0 : 1;
     $('#item-magnet').classList.add('used');
     game.marks[idx] = inCode ? 'yes' : 'off';
     syncKeyMarks();
@@ -558,12 +610,13 @@ $('#item-magnet').addEventListener('click', () => {
 $('#item-scope').addEventListener('click', () => {
   if (!game.active || game.finished || game.pendingEnd || !game.items.scope) return;
   let picks = '';
+  const scopeFree = !!(game.variant && game.variant.freeItems);
   for (let i = 0; i < game.len; i++) {
     picks += `<div class="tile" data-pos="${i}">${i + 1}</div>`;
   }
   const box = openModal(`
     <h3>🔭 望远镜偷看</h3>
-    <p>选一个位置，直接看到那里的图标（代价：+3 步，慎用！)</p>
+    <p>选一个位置，直接看到那里的图标${scopeFree ? '（代价：免费！）' : '（代价：+3 步，慎用！）'}</p>
     <div class="pos-pick">${picks}</div>
     <div class="modal-actions"><button class="big-btn" id="m-cancel">先不用</button></div>`);
   box.querySelector('#m-cancel').addEventListener('click', closeModal);
@@ -571,7 +624,7 @@ $('#item-scope').addEventListener('click', () => {
     const pos = +t.dataset.pos;
     const idx = +game.secret[pos];
     game.items.scope = false;
-    game.penalty += 3;
+    game.penalty += scopeFree ? 0 : 3;
     $('#item-scope').classList.add('used');
     game.revealed[pos] = idx;
     game.marks[idx] = 'yes';
@@ -1185,7 +1238,30 @@ function goHome() {
   showScreen('screen-home');
 }
 
+// 每日挑战进行中:关闭/刷新页面前弹原生确认(第一猜后离开=当天记为未破解)
+window.addEventListener('beforeunload', e => {
+  if (game.active && !game.finished && game.mode === 'daily' && game.guesses.length > 0) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
 $('#btn-back').addEventListener('click', () => {
+  if (game.active && !game.finished && game.mode === 'daily') {
+    const guessed = game.guesses.length > 0;
+    const box = openModal(`
+      <h3>☀️ 确定退出每日挑战?</h3>
+      <p>${guessed
+        ? '你已经开始猜了——现在退出,<b>今天会记为未破解</b>,连胜也会中断,零点前不能重来哦。'
+        : '还没开始猜,现在退出不影响今天的挑战,稍后可以再来。'}</p>
+      <div class="modal-actions">
+        <button class="big-btn primary" id="m-stay">继续挑战</button>
+        <button class="big-btn" id="m-leave">${guessed ? '狠心退出' : '退出'}</button>
+      </div>`);
+    box.querySelector('#m-stay').addEventListener('click', closeModal);
+    box.querySelector('#m-leave').addEventListener('click', () => { closeModal(); goHome(); });
+    return;
+  }
   if (game.active && game.guesses.length > 0 && !game.finished) {
     const box = openModal(`
       <h3>要离开对局吗？</h3>

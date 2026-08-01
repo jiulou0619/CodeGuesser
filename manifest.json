@@ -1,0 +1,12 @@
+{
+  "name": "码上猜 CodePop",
+  "short_name": "CodePop",
+  "description": "码上猜,马上猜!破解好友的图标密码,步数少者称王",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#fdf3e0",
+  "theme_color": "#fdf3e0",
+  "icons": [
+    { "src": "assets/logo-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#fdf3e0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#221d36" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/logo-512.png">
 <title>码上猜 CodePop · 好友猜图标对决</title>
 <meta name="description" content="码上猜，马上猜！Q弹像素风图标解码对战 —— 出题给好友，随时接招，无需服务器！">
 <link rel="icon" type="image/png" href="assets/icons/star.png">
@@ -80,6 +84,7 @@
       <div class="play-mode" id="play-mode"></div>
       <div class="play-counters">
         <span class="counter" id="counter-steps" title="步数（含道具代价）"><img src="assets/icons/hit.png" alt="">0 步</span>
+        <span class="counter" id="counter-left" title="剩余猜测次数"><img src="assets/icons/heart.png" alt="">12</span>
         <span class="counter" id="counter-timer"><img src="assets/icons/clock.png" alt="">0:00</span>
         <button class="counter counter-btn" id="btn-giveup" title="认输并查看答案"><img src="assets/icons/flag.png" alt="">认输</button>
       </div>
@@ -92,7 +97,7 @@
         <span class="legend-item"><span class="fb-chip fb-pos">位置</span>其中几个连位置都对</span>
       </div>
       <div class="items-bar" id="items-bar">
-        <button class="item-btn" id="item-magnet" title="磁铁：问一个图标在不在密码里（+1步）">
+        <button class="item-btn" id="item-magnet" title="磁铁：问两个图标在不在密码里（+1步）">
           <img src="assets/icons/magnet.png" alt="磁铁"><span class="item-cost">+1步</span>
         </button>
         <button class="item-btn" id="item-scope" title="望远镜：偷看一个位置的图标（+3步）">

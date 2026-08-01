@@ -69,6 +69,9 @@ const store = Object.assign({
   duelPlayed: 0, duelWins: 0,
   streak: 0, maxStreak: 0, lastDailyWin: '',
   daily: {},          // { '2026-07-16': {steps, win, grid} } 只保留当天
+  dailyRun: null,     // 进行中的每日局(刷新/崩溃可恢复,结算后清空)
+  stats: {},          // 本地统计:{ mode: { plays, wins, stepsHist: {n:次数} } }
+  ftue: {},           // 一次性引导标记:{ goal: 1, mark: 1 }
 }, JSON.parse(localStorage.getItem(STORE_KEY) || '{}'));
 function save() { localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
 
@@ -188,7 +191,7 @@ const VARIANTS = [
     gen(rng = Math.random) { return randomCode(rng); },
   },
   {
-    id: 'tweak', name: t('锁匠日'), emoji: '🗝', len: 4, allowDup: false, tweak: true,
+    id: 'tweak', name: t('锁匠日'), emoji: '🗝', len: 4, allowDup: false, tweak: true, maxG: 14,
     rule: t('像真锁匠一样细细开锁:从第 2 猜起,每次只能在上一行基础上「换掉 1 格」,或「交换 2 格」的位置。'),
     tip: t('每次只动一处,盯紧两颗胶囊的涨跌——那就是锁芯的咔哒声,每一下都在告诉你方向。'),
     gen(rng = Math.random) { return randomCode(rng); },
@@ -316,6 +319,8 @@ const game = {
   robot: null,         // 对手日:{ rows, candidates, rng }
   robotWin: false,     // 对手日:机器人抢先破解
   turnLock: false,     // 对手日:机器人回合中,禁玩家操作
+  chainSeen: false,    // 接龙日:已强调过首个「相邻>0」
+  nearWinShown: false, // 本局已提示过"图案全中"近胜时刻
   startTime: 0,
   timerId: 0,
   duelCtx: null,       // 对战上下文（收到的payload)
@@ -340,6 +345,7 @@ function startGame(mode, secret, duelCtx = null, variant = null) {
     guesses: [], input: [], penalty: 0,
     items: { magnet: true, scope: true, ad: true },
     marks: {}, revealed: {}, locked: {}, tweakSel: -1, robotWin: false, turnLock: false,
+    chainSeen: false, nearWinShown: false,
     robot: variant && variant.robot ? { rows: [], candidates: null, rng: seededRng('robot-' + secret) } : null,
     duelCtx, startTime: Date.now(),
     dailyDate: todayStr(), dailyNum: dailyNumber(),
@@ -368,6 +374,12 @@ function startGame(mode, secret, duelCtx = null, variant = null) {
     if (variant.honey) addIntel(`🍯 ${t("已粘住")} <b id="honey-count">0</b>/${game.len}`, true);
     if (variant.robot) addIntel(`🤖 ${t("它的反馈你也能用!")}`, true);
   }
+  // 首次引导:目标一句话钉在情报栏(终生只出现一次)
+  if (!store.ftue.goal) {
+    addIntel('🎯 ' + T`目标:猜出 ${game.len} 个图标和它们的顺序,次数有限!`, true);
+    store.ftue.goal = 1;
+    save();
+  }
   appendInputRow();
   updateCounters();
   showScreen('screen-play');
@@ -391,6 +403,63 @@ function updateCounters(bump = false) {
   const c = $('#counter-steps');
   c.innerHTML = `<img src="assets/icons/hit.png">${t("%1 步", stepCount())}`;
   if (bump) { c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); }
+  // 剩余次数:紧张感的来源必须可见
+  const left = Math.max(0, maxGuesses() - game.guesses.length);
+  const lc = $('#counter-left');
+  lc.innerHTML = `<img src="assets/icons/heart.png">${left}/${maxGuesses()}`;
+  lc.title = t('剩余猜测次数');
+  lc.classList.toggle('danger', game.active && left <= 3);
+  saveDailyRun();
+}
+/* 触觉(Android Chrome 等支持 vibrate 的环境;iOS Safari 自动跳过) */
+function buzz(pattern) {
+  try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) { /* ignore */ }
+}
+
+/* ---------------- 每日挑战:进行中局面持久化(误刷新不再烧掉当天) ---------------- */
+function saveDailyRun() {
+  if (game.mode !== 'daily' || !game.active || game.finished) return;
+  if (!game.guesses.length) return;
+  store.dailyRun = {
+    date: game.dailyDate,
+    guesses: game.guesses,
+    penalty: game.penalty,
+    marks: game.marks,
+    revealed: game.revealed,
+    items: game.items,
+    revived: game.revived,
+    elapsed: Date.now() - game.startTime,
+  };
+  save();
+}
+function resumeDaily(run) {
+  startGame('daily', dailyCode());
+  game.guesses = run.guesses.map(g => ({ code: g.code, a: g.a, b: g.b }));
+  game.penalty = run.penalty || 0;
+  game.marks = run.marks || {};
+  game.revealed = run.revealed || {};
+  Object.assign(game.items, run.items || {});
+  game.revived = !!run.revived;
+  game.startTime = Date.now() - (run.elapsed || 0);
+  // 静态重建历史行,再挂输入行
+  $('#board').innerHTML = '';
+  game.guesses.forEach((g, gi) => {
+    const row = el('div', 'guess-row');
+    row.innerHTML = `<span class="row-index">${gi + 1}</span><div class="tiles"></div><div class="row-feedback">${feedbackHTML(g.a, g.b)}</div>`;
+    const tiles = row.querySelector('.tiles');
+    [...g.code].forEach(c => { const tl = el('div', 'tile filled'); paintTile(tl, +c); tiles.appendChild(tl); });
+    $('#board').appendChild(row);
+  });
+  ['magnet', 'scope', 'ad'].forEach(k => { if (!game.items[k]) $('#item-' + k).classList.add('used'); });
+  syncKeyMarks();
+  if (game.guesses.length >= maxGuesses()) {
+    game.pendingEnd = true;
+    if (!game.revived) offerRevive(); else finishGame(false);
+  } else {
+    appendInputRow();
+  }
+  updateCounters();
+  toast(t('已恢复今天的进度,接着猜!'), ICON_PATH('sun'));
 }
 
 /* ---------------- 键盘 ---------------- */
@@ -434,6 +503,7 @@ function cycleMark(idx) {
   game.marks[idx] = cur === '' ? 'off' : cur === 'off' ? 'yes' : '';
   sfx('ui', 0.35);
   syncKeyMarks();
+  saveDailyRun();
 }
 function syncKeyMarks() {
   document.querySelectorAll('#keyboard .key[data-idx]').forEach(k => {
@@ -629,6 +699,7 @@ function submitGuess() {
   tiles.forEach((t, i) => {
     setTimeout(() => { t.classList.add('reveal'); typePop(); }, i * 130);
   });
+  buzz(12);
   const fb = row.querySelector('.row-feedback');
   setTimeout(() => {
     fb.innerHTML = feedbackHTML(a, b, chain);
@@ -636,6 +707,20 @@ function submitGuess() {
     else if (a > 0) sfx('right', 0.55);
     else if (b > 0) sfx('right2', 0.5);
     else sfx('completed', 0.4);
+    if (a + b > 0) buzz(15);
+    // 接龙日:第一次「相邻>0」是切换拼链思路的信号,强调一下
+    if (chain > 0 && !game.chainSeen) {
+      game.chainSeen = true;
+      const chip = fb.querySelector('.fb-chain');
+      if (chip) chip.classList.add('fb-pulse');
+      sfx('right', 0.6);
+    }
+    // 近胜节拍:图案全中但顺序未齐——玩家最抓心的时刻(每局只提示一次)
+    if (a + b === game.len && a < game.len && !game.nearWinShown) {
+      game.nearWinShown = true;
+      toast(t('图案全中!只差顺序了'), ICON_PATH('hit'));
+      buzz([20, 50, 20]);
+    }
   }, game.len * 130 + 120);
 
   updateCounters(true);
@@ -647,9 +732,13 @@ function submitGuess() {
       if (game.mode === 'daily' && !game.revived) return offerRevive();
       return finishGame(false);
     }
-    if (game.variant && game.variant.maxG) {
-      const left = maxGuesses() - game.guesses.length;
-      if (left === 2) toast(t('注意:只剩 2 次机会了!'));
+    const left = maxGuesses() - game.guesses.length;
+    if (left === 3) { toast(t('注意:只剩 3 次机会了!')); sfx('completed', 0.5); buzz(30); }
+    // 首局第一猜后:曝光长按标记功能(终生一次)
+    if (!store.ftue.mark && game.guesses.length === 1) {
+      store.ftue.mark = 1;
+      save();
+      toast(t('小技巧:长按键盘图标,可以做「排除/锁定」标记'));
     }
     if (v && v.honey) applyHoneyLocks(code, row);
     if (v && v.robot) return robotTurn();
@@ -664,13 +753,15 @@ function applyHoneyLocks(code, row) {
     if (code[i] === game.secret[i] && game.locked[i] === undefined) {
       game.locked[i] = +code[i];
       game.marks[+code[i]] = 'yes';
-      tiles[i].classList.add('honey-locked');
+      tiles[i].classList.add('honey-locked', 'honey-pop');
       newLock = true;
     }
   }
   if (newLock) {
     syncKeyMarks();
     sfx('ability', 0.5);
+    sfx('right', 0.5);
+    buzz([20, 40, 20]);
     toast(T`🍯 粘住了!已锁定 ${Object.keys(game.locked).length}/${game.len} 格`);
   }
   const hc = $('#honey-count');
@@ -742,23 +833,37 @@ $('#item-magnet').addEventListener('click', () => {
   });
   const box = openModal(`
     <h3>${t('🧲 磁铁探测')}</h3>
-    <p>${t("选一个图标，磁铁会告诉你它<b>在不在</b>密码里")}${t("（代价：+1 步）")}</p>
+    <p>${t("选<b>两个</b>图标，磁铁会分别告诉你它们<b>在不在</b>密码里")}${t("（代价：+1 步）")}</p>
     <div class="pick-grid">${grid}</div>
     <div class="modal-actions"><button class="big-btn" id="m-cancel">${t('先不用')}</button></div>`);
   box.querySelector('#m-cancel').addEventListener('click', closeModal);
+  let first = -1;
   box.querySelectorAll('[data-pick]').forEach(btn => btn.addEventListener('click', () => {
     const idx = +btn.dataset.pick;
-    const inCode = game.secret.includes(String(idx));
+    if (first < 0) {
+      // 第一个:选中高亮,等第二个
+      first = idx;
+      btn.style.outline = '4px solid var(--green)';
+      sfx('ui', 0.4);
+      return;
+    }
+    if (idx === first) return;
     game.items.magnet = false;
     game.penalty += 1;
     $('#item-magnet').classList.add('used');
-    game.marks[idx] = inCode ? 'yes' : 'off';
-    syncKeyMarks();
-    addIntel(`<img src="assets/icons/magnet.png">${chipIconHTML(idx)}${inCode ? t("在密码里！") : t("不在")}`, inCode);
-    updateCounters(true);
     closeModal();
+    let hits = 0;
+    [first, idx].forEach(k => {
+      const inCode = game.secret.includes(String(k));
+      if (inCode) hits++;
+      game.marks[k] = inCode ? 'yes' : 'off';
+      addIntel(`<img src="assets/icons/magnet.png">${chipIconHTML(k)}${inCode ? t("在密码里！") : t("不在")}`, inCode);
+    });
+    syncKeyMarks();
+    updateCounters(true);
     sfx('ability', 0.55);
-    toast(inCode ? T`${ICONS[idx].name} 在密码里！` : T`${ICONS[idx].name} 不在密码里`, ICON_PATH('magnet'));
+    buzz(15);
+    toast(T`磁铁报告:两个里有 ${hits} 个在密码里,详情看情报栏`, ICON_PATH('magnet'));
   }));
 });
 $('#item-scope').addEventListener('click', () => {
@@ -921,6 +1026,7 @@ function finishGame(win, surrendered = false) {
 
   if (win) {
     sfx(game.mode === 'daily' ? 'daily' : 'win', 0.6);
+    buzz([40, 60, 40]);
     confetti();
     document.querySelectorAll('#board .guess-row:last-child .tile').forEach((t, i) => {
       setTimeout(() => t.classList.add('win-dance'), i * 90);
@@ -928,6 +1034,14 @@ function finishGame(win, surrendered = false) {
   } else {
     sfx('completed', 0.45);
   }
+
+  // 本地统计:胜率/步数分布(按模式与变体分桶,为日后调平衡收集事实)
+  const bucket = game.mode === 'variant' && game.variant ? 'variant:' + game.variant.id : game.mode;
+  if (!store.stats[bucket]) store.stats[bucket] = { plays: 0, wins: 0, stepsHist: {} };
+  const sb = store.stats[bucket];
+  sb.plays++;
+  if (win) { sb.wins++; sb.stepsHist[steps] = (sb.stepsHist[steps] || 0) + 1; }
+  store.dailyRun = null; // 对局已结算,清掉恢复现场
 
   // 存档统计
   store.played++;
@@ -1381,10 +1495,15 @@ $('#btn-back').addEventListener('click', () => {
 $('#btn-duel').addEventListener('click', () => openSetup('c1'));
 $('#btn-free').addEventListener('click', () => startGame('free', randomCode()));
 
-/* ---------------- 变奏练习：随机翻一条公开规则 ---------------- */
+/* ---------------- 变奏挑战:默认按日期轮换「今日变奏」,也可随机换 ---------------- */
+function todaysVariant() {
+  const rng = seededRng('variant-' + todayStr());
+  return VARIANTS[(rng() * VARIANTS.length) | 0];
+}
 function openVariantIntro(forced = null) {
-  const v = forced || VARIANTS[(Math.random() * VARIANTS.length) | 0];
+  const v = forced || todaysVariant();
   const box = openModal(`
+    ${!forced ? `<div class="variant-today">📅 ${t('今日变奏')}</div>` : ''}
     <div class="variant-flip">${v.emoji}</div>
     <h3>${v.name}</h3>
     <p class="variant-rule">${v.rule}</p>
@@ -1404,6 +1523,10 @@ function openVariantIntro(forced = null) {
 $('#btn-variant').addEventListener('click', () => openVariantIntro());
 $('#btn-daily').addEventListener('click', () => {
   const today = todayStr();
+  // 进行中的今日局优先恢复(比"已完成"判定更早:首猜防刷记录不算完成)
+  const run = store.dailyRun;
+  if (run && run.date === today && run.guesses && run.guesses.length) return resumeDaily(run);
+  if (run && run.date !== today) { store.dailyRun = null; save(); }
   const done = store.daily[today];
   if (done) {
     // 已完成：直接展示战报
@@ -1451,7 +1574,8 @@ $('#btn-help').addEventListener('click', () => {
     </div>
     <p style="text-align:center;font-size:12.5px">${t("例：密码是 🍎🐱⭐⚡，你猜 🍎⭐🍀🌙")}<br>${t("🍎⭐ 都在密码里 → 图案 2；但只有 🍎 站对了地方 → 位置 1")}</p>
     <p>${t("注意：它<b>不会告诉你对的是哪几个</b>——推理出来才过瘾！")}</p>
-    <p>${t("<b>道具：</b>🧲 磁铁问一个图标在不在（+1步） · 🔭 望远镜偷看一个位置（+3步） · 📺 看 15 秒小广告，免费排除一个不在的图标")}</p>
+    <p>${t("<b>道具：</b>🧲 磁铁问两个图标在不在（+1步） · 🔭 望远镜偷看一个位置（+3步） · 📺 看 15 秒小广告，免费排除一个不在的图标")}</p>
+    <p>${t("<b>次数：</b>普通局有 12 次机会，右上角随时看剩余次数。")}</p>
     <p>${t("<b>小技巧：</b>长按或右键键盘图标，可以标记「排除/锁定」帮助推理。")}</p>
     <p>${t("<b>好友对战：</b>布置密码 → 发链接给好友 → TA 破解后出题反击 → 你迎战 → 步数少者赢！不用同时在线，随时接招。")}</p>
     <div class="modal-actions"><button class="big-btn primary" id="m-ok">${t("明白了！")}</button></div>`)

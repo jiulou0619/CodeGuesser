@@ -296,6 +296,19 @@ function showScreen(id) {
   $('#btn-back').hidden = (id === 'screen-home');
   document.body.dataset.screen = id;
   window.scrollTo(0, 0);
+  syncHelpHint();
+}
+/* 首玩引导:主页上用气泡指向 ?,打开过教程或点 ✕ 后不再出现 */
+function syncHelpHint() {
+  const on = document.body.dataset.screen === 'screen-home' && !store.ftue.help;
+  $('#help-hint').hidden = !on;
+  $('#btn-help').classList.toggle('help-glow', on);
+}
+function markHelpSeen() {
+  if (store.ftue.help) return;
+  store.ftue.help = 1;
+  save();
+  syncHelpHint();
 }
 
 /* ============================================================
@@ -1561,7 +1574,14 @@ $('#btn-sound').addEventListener('click', () => {
 });
 $('#logo').addEventListener('click', () => { sfx('meow', 0.6); });
 
+$('#help-hint').addEventListener('click', () => $('#btn-help').click());
+$('#help-hint-close').addEventListener('click', e => {
+  e.stopPropagation();
+  markHelpSeen();
+  sfx('ui', 0.3);
+});
 $('#btn-help').addEventListener('click', () => {
+  markHelpSeen();
   openModal(`
     <h3>${t("🎯 怎么玩")}</h3>
     <p>${t("<b>目标：</b>密码是 <b>4 个不重复</b>的图标。用最少的步数，猜出<b>是哪 4 个</b>、<b>按什么顺序</b>排的。")}</p>
@@ -1648,6 +1668,7 @@ window.addEventListener('hashchange', () => {
 
 (function boot() {
   syncSoundBtn();
+  syncHelpHint();
   // 清理过期的每日记录
   const today = todayStr();
   for (const k of Object.keys(store.daily)) if (k !== today) delete store.daily[k];

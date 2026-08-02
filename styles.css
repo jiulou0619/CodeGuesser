@@ -176,7 +176,7 @@ img { image-rendering: pixelated; }
 }
 .variant-rule {
   background: #fff3bf; border: 2px dashed #e6a817; border-radius: 12px;
-  padding: 10px 14px; font-size: 14.5px; line-height: 1.7; color: var(--ink) !important;
+  padding: 10px 14px; font-size: 14.5px; line-height: 1.7; color: #33294e !important; /* 亮黄底两种主题都用深字 */
 }
 .variant-tip { text-align: center; font-size: 12.5px; }
 .variant-fams { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
@@ -726,4 +726,43 @@ body[data-screen="screen-play"] #app { padding-bottom: 8px; }
     filter: invert(88%) sepia(10%) saturate(600%) hue-rotate(210deg) brightness(105%);
   }
   .key-enter img { filter: none; }
+}
+
+/* ---------- 首玩引导:指向 ? 的教程气泡 + 按钮呼吸光环 ---------- */
+.help-hint {
+  position: absolute; top: 64px; right: 12px; z-index: 30;
+  max-width: 260px;
+  background: var(--card); border: var(--line); border-radius: 14px;
+  box-shadow: var(--shadow-hard);
+  padding: 10px 12px;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13.5px; font-weight: 700; line-height: 1.5;
+  cursor: pointer;
+  animation: hint-bob 1.8s ease-in-out infinite;
+}
+.help-hint::before {
+  content: ''; position: absolute; top: -9.5px; right: 20px;
+  width: 13px; height: 13px; background: var(--card);
+  border-left: 3px solid #33294e; border-top: 3px solid #33294e;
+  transform: rotate(45deg);
+}
+.help-hint-close {
+  border: 2px solid var(--ink); background: transparent; color: var(--ink);
+  width: 24px; height: 24px; min-width: 24px; border-radius: 8px;
+  font-size: 12px; font-weight: 800; cursor: pointer; line-height: 1;
+  position: relative;
+}
+.help-hint-close::after { content: ''; position: absolute; inset: -10px; }
+@keyframes hint-bob { 50% { transform: translateY(5px); } }
+#btn-help.help-glow { animation: help-glow 1.4s ease-in-out infinite; }
+@keyframes help-glow {
+  0%, 100% { box-shadow: 0 4px 0 rgba(51, 41, 78, .9), 0 0 0 0 rgba(240, 101, 149, .8); }
+  50%      { box-shadow: 0 4px 0 rgba(51, 41, 78, .9), 0 0 0 10px rgba(240, 101, 149, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .help-hint { animation: none; }
+  #btn-help.help-glow { animation: none; box-shadow: 0 4px 0 rgba(51, 41, 78, .9), 0 0 0 4px rgba(240, 101, 149, .5); }
+}
+@media (prefers-color-scheme: dark) {
+  .help-hint::before { border-color: #4e4478; }
 }

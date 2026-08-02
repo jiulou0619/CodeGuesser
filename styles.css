@@ -156,7 +156,7 @@ img { image-rendering: pixelated; }
 .variant-new {
   position: absolute; top: -10px; right: -6px;
   background: linear-gradient(150deg, #ff8fab, #f06595);
-  color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 1px;
+  color: #33294e; font-size: 11px; font-weight: 800; letter-spacing: 1px; /* 粉底深字,两种主题对比度都达标 */
   padding: 3px 10px; border-radius: 999px;
   border: 2.5px solid var(--ink);
   box-shadow: 0 3px 0 rgba(51, 41, 78, .85);
@@ -302,6 +302,7 @@ img { image-rendering: pixelated; }
 }
 .fb-chip {
   display: inline-flex; align-items: center; gap: 4px;
+  color: var(--ink); /* 别从图例的浅灰继承 */
   font-size: 12.5px; font-weight: 700; line-height: 1;
   padding: 4px 8px; border-radius: 999px;
   border: 2px solid var(--ink); white-space: nowrap;
@@ -425,10 +426,10 @@ img { image-rendering: pixelated; }
 .key-wide img { width: 26px; height: 26px; filter: invert(18%) sepia(18%) saturate(1400%) hue-rotate(215deg) brightness(60%); }
 .key-enter { background: linear-gradient(150deg, #7ee3a2, #40c057); grid-column: span 3; }
 .key-enter img { filter: none; width: 30px; height: 30px; }
-.key-enter span { font-size: 16px; font-weight: 800; color: #fff; text-shadow: 1px 2px 0 rgba(0,0,0,.25); }
+.key-enter span { font-size: 16px; font-weight: 800; color: #14421f; } /* 亮绿底配深绿字,白字对比度只有 1.6 */
 .key-enter { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .kbd-hint { text-align: center; font-size: 11.5px; color: var(--ink-soft); margin-top: 14px; }
-.mark-demo { border-radius: 6px; padding: 1px 6px; border: 1.5px solid var(--ink); font-weight: 700; }
+.mark-demo { border-radius: 6px; padding: 1px 6px; border: 1.5px solid var(--ink); font-weight: 700; color: var(--ink); }
 .mark-demo.off { background: #e5e0ef; opacity: .6; }
 .mark-demo.yes { background: #b2f2bb; }
 
@@ -765,4 +766,30 @@ body[data-screen="screen-play"] #app { padding-bottom: 8px; }
 }
 @media (prefers-color-scheme: dark) {
   .help-hint::before { border-color: #4e4478; }
+}
+
+/* ---------- 深色模式:对比度审计修复(逐组件) ---------- */
+@media (prefers-color-scheme: dark) {
+  /* 认输按钮:亮底换暗底,浅字浅图标才成立 */
+  .counter-btn { background: #453c68; }
+  /* 道具按钮保持亮糖果底 -> 图标恢复深墨线,价签钉回深底白字 */
+  .item-btn > img { filter: invert(18%) sepia(18%) saturate(1400%) hue-rotate(215deg) brightness(60%); }
+  .item-btn .item-cost { background: #33294e; color: #fff; }
+  /* 模式标签/主页统计条:在深纸面上用浅墨线图标 */
+  .play-mode img, .stat-chip img { filter: invert(88%) sepia(10%) saturate(600%) hue-rotate(210deg) brightness(105%); }
+  /* 猜! 按钮:亮绿底上用深绿字(白字对比度只有 1.6) */
+  .key-enter span { color: #14421f; text-shadow: none; }
+  /* 底部标记图例小样:亮底配深字 */
+  .mark-demo { color: #33294e; }
+  /* toast:锭形深底,别跟着 --ink 变浅 */
+  .toast { background: #17122b; }
+  /* 情报栏底:奶白改玻璃暗色 */
+  .intel-bar { background: rgba(255, 255, 255, .07); border-color: #56497f; }
+}
+
+@media (prefers-color-scheme: dark) {
+  /* 亮底大按钮(绿/蓝/粉)内的图标保持深墨线 */
+  .big-btn.green img, .big-btn.blue img, .big-btn.primary img {
+    filter: invert(18%) sepia(18%) saturate(1400%) hue-rotate(215deg) brightness(60%);
+  }
 }

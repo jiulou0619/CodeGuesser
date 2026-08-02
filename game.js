@@ -104,9 +104,16 @@ function decodePayload(str) {
     return (obj && obj.t) ? obj : null;
   } catch (e) { return null; }
 }
-const baseUrl = () => location.origin.startsWith('http')
-  ? location.origin + location.pathname
-  : location.href.split('#')[0];
+/* 分享/对战链接的落地页:在 itch 等第三方镜像(iframe CDN,更新会换地址)上运行时,
+   链接一律指向正式站,保证对战链条和战报永远可达 */
+const CANONICAL_URL = 'https://jiulou0619.github.io/CodeGuesser/';
+const MIRROR_HOSTS = /\.(itch\.zone|itch\.io|hwcdn\.net)$/;
+const baseUrl = () => {
+  if (MIRROR_HOSTS.test(location.hostname)) return CANONICAL_URL;
+  return location.origin.startsWith('http')
+    ? location.origin + location.pathname
+    : location.href.split('#')[0];
+};
 const duelLink = payload => `${baseUrl()}#d=${encodePayload(payload)}`;
 
 /* ---------------- 随机 & 每日密码 ---------------- */
